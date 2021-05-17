@@ -17,40 +17,19 @@ type Stack struct {
 	rail    *SNode
 }
 
-func (s *Stack) Fill() bool {
-	f := false
-	if s.maxSize != -1 && s.size == s.maxSize {
-		f = true
+func New(maxSize int) *Stack {
+	node := &SNode{
+		data: nil,
+		next: nil,
+		prev: nil,
 	}
-	return f
-}
 
-func (s *Stack) Empty() bool {
-	return s.size == 0
-}
-
-func (s *Stack) Size() int {
-	return s.size
-}
-
-func (s *Stack) MaxSize() int {
-	return s.maxSize
-}
-
-func (s *Stack) ToString() string {
-	// TODO ToString method
-
-	return ""
-}
-
-func (s *Stack) Clear() bool {
-	s.rail = s.head
-	s.head.prev = nil
-	s.head.next = nil
-	s.head.data = nil
-	s.size = 0
-
-	return true
+	return &Stack{
+		size:    0,
+		maxSize: maxSize,
+		head:    node,
+		rail:    node,
+	}
 }
 
 func (s *Stack) Push(data interface{}) error {
@@ -89,4 +68,40 @@ func (s *Stack) Pop() (interface{}, error) {
 	s.size--
 
 	return data, nil
+}
+
+func (s *Stack) Fill() bool {
+	f := false
+	if s.maxSize != -1 && s.size == s.maxSize {
+		f = true
+	}
+	return f
+}
+
+func (s *Stack) Empty() bool {
+	return s.size == 0
+}
+
+func (s *Stack) Size() int {
+	return s.size
+}
+
+func (s *Stack) MaxSize() int {
+	return s.maxSize
+}
+
+func (s *Stack) ToString() string {
+	// TODO ToString method
+
+	return ""
+}
+
+func (s *Stack) Clear() bool {
+	s.rail = s.head
+	s.head.prev = nil
+	s.head.next = nil
+	s.head.data = nil
+	s.size = 0
+
+	return true
 }

@@ -10,60 +10,51 @@ type QNode struct {
 
 type Queue struct {
 	size    int
+	maxSize int
 	head    *QNode
 	rail    *QNode
-	maxSize int
 }
 
-func (q *Queue) Init(maxSize int) *Queue {
-	q = new(Queue)
+func New(maxSize int) *Queue {
 	node := &QNode{
 		data: nil,
 		next: nil,
 		prev: nil,
 	}
-	q.head = node
-	q.rail = node
-	q.maxSize = maxSize
-	q.size = 0
 
-	return q
+	return &Queue{
+		size:    0,
+		maxSize: maxSize,
+		head:    node,
+		rail:    node,
+	}
 }
 
-func (q *Queue) Fill() bool {
-	f := false
-	if q.MaxSize() != -1 {
-		f = q.Size() == q.MaxSize()
+func (q *Queue) CopyFromArray(datas []interface{}) error {
+	l := len(datas)
+	if q.maxSize != -1 && q.size+l > q.maxSize {
+		return errors.New("Not enough free space.")
 	}
 
-	return f
+	for a := range datas {
+		err := q.Push(a)
+		if err != nil {
+			return err
+		}
+	}
+	q.size += l
+
+	return nil
 }
 
-func (q *Queue) Empty() bool {
-	return q.Size() == 0
-}
+func (q *Queue) SetMaxSize(maxSize int) error {
+	if maxSize != -1 && maxSize < q.size {
+		return errors.New("New maxSize is less than current size.")
+	}
 
-func (q *Queue) Size() int {
-	return q.size
-}
+	q.maxSize = maxSize
 
-func (q *Queue) ToString() string {
-	// TODO: ToString method
-	return ""
-}
-
-func (q *Queue) Clear() bool {
-	q.rail = q.head
-	q.head.prev = nil
-	q.head.next = nil
-	q.head.data = nil
-	q.size = 0
-
-	return true
-}
-
-func (q *Queue) MaxSize() int {
-	return q.maxSize
+	return nil
 }
 
 func (q *Queue) Push(data interface{}) error {
@@ -101,4 +92,40 @@ func (q *Queue) Pop() (interface{}, error) {
 	q.size--
 
 	return data, nil
+}
+
+func (q *Queue) Fill() bool {
+	f := false
+	if q.MaxSize() != -1 {
+		f = q.Size() == q.MaxSize()
+	}
+
+	return f
+}
+
+func (q *Queue) Empty() bool {
+	return q.Size() == 0
+}
+
+func (q *Queue) Size() int {
+	return q.size
+}
+
+func (q *Queue) ToString() string {
+	// TODO: ToString method
+	return ""
+}
+
+func (q *Queue) Clear() bool {
+	q.rail = q.head
+	q.head.prev = nil
+	q.head.next = nil
+	q.head.data = nil
+	q.size = 0
+
+	return true
+}
+
+func (q *Queue) MaxSize() int {
+	return q.maxSize
 }
