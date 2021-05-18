@@ -70,6 +70,39 @@ func (s *Stack) Pop() (interface{}, error) {
 	return data, nil
 }
 
+func (s *Stack) SetMaxSize(maxSize int) error {
+	if maxSize != -1 && maxSize < s.size {
+		return errors.New("New maxSize is less than current size.")
+	}
+
+	s.maxSize = maxSize
+
+	return nil
+}
+
+func (s *Stack) CopyFromArray(datas []interface{}) error {
+	l := len(datas)
+	if s.maxSize != -1 && s.size+l > s.maxSize {
+		return errors.New("Not enough free space.")
+	}
+
+	for a := range datas {
+		err := s.Push(a)
+		if err != nil {
+			return err
+		}
+	}
+	s.size += l
+
+	return nil
+}
+
+func (s *Stack) Copy(other *Stack) error {
+	// TODO: Copy method
+
+	return nil
+}
+
 func (s *Stack) Fill() bool {
 	f := false
 	if s.maxSize != -1 && s.size == s.maxSize {
