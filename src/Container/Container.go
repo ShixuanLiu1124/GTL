@@ -7,5 +7,6 @@ type Container interface {
 	MaxSize() int
 	SetMaxSize(int) error
 	Clear() bool
+	String() string
 	CopyFromArray([]interface{}) error
 }

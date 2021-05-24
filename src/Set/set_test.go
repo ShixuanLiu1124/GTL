@@ -905,7 +905,7 @@ func Test_Iterator(t *testing.T) {
 	}
 
 	if !a.Equal(b) {
-		t.Error("The sets are not equal after iterating (Iterator) through the first set")
+		t.Error("The sets are not equal after iterating (iterator) through the first set")
 	}
 }
 
@@ -923,7 +923,7 @@ func Test_UnsafeIterator(t *testing.T) {
 	}
 
 	if !a.Equal(b) {
-		t.Error("The sets are not equal after iterating (Iterator) through the first set")
+		t.Error("The sets are not equal after iterating (iterator) through the first set")
 	}
 }
 
@@ -938,7 +938,7 @@ func Test_IteratorStop(t *testing.T) {
 	it := a.Iterator()
 	it.Stop()
 	for range it.C {
-		t.Error("The iterating (Iterator) did not stop after Stop() has been called")
+		t.Error("The iterating (iterator) did not stop after Stop() has been called")
 	}
 }
 
@@ -1022,13 +1022,13 @@ func Test_PowerSet(t *testing.T) {
 
 func Test_PowerSetThreadSafe(t *testing.T) {
 	set := NewSet().PowerSet()
-	_, setIsThreadSafe := set.(*SafeSet)
+	_, setIsThreadSafe := set.(*safeSet)
 	if !setIsThreadSafe {
 		t.Error("result of PowerSet should be thread safe")
 	}
 
 	subset := set.Pop()
-	_, subsetIsThreadSafe := subset.(*SafeSet)
+	_, subsetIsThreadSafe := subset.(*safeSet)
 	if !subsetIsThreadSafe {
 		t.Error("subsets in PowerSet result should be thread safe")
 	}

@@ -1,32 +1,36 @@
 package Queue
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
 
-type QNode struct {
+type qNode struct {
 	value interface{}
-	next  *QNode
-	prev  *QNode
+	next  *qNode
+	prev  *qNode
 }
 
-type UnsafeQueue struct {
+type unsafeQueue struct {
 	size    int
 	maxSize int
-	head    *QNode
-	rail    *QNode
+	head    *qNode
+	rail    *qNode
 }
 
-func New(maxSize int, values ...interface{}) (*UnsafeQueue, error) {
+func NewUnsafeQueue(maxSize int, values ...interface{}) (*unsafeQueue, error) {
 	if maxSize != -1 && len(values) > maxSize {
 		return nil, errors.New("Length of values is too long.")
 	}
 
-	node := &QNode{
+	node := &qNode{
 		value: nil,
 		next:  nil,
 		prev:  nil,
 	}
 
-	q := &UnsafeQueue{
+	q := &unsafeQueue{
 		size:    0,
 		maxSize: maxSize,
 		head:    node,
@@ -43,12 +47,12 @@ func New(maxSize int, values ...interface{}) (*UnsafeQueue, error) {
 	return q, nil
 }
 
-func (q *UnsafeQueue) Push(value interface{}) error {
+func (q *unsafeQueue) Push(value interface{}) error {
 	if q.Fill() {
 		return errors.New("This queue is fill.")
 	}
 
-	node := &QNode{
+	node := &qNode{
 		value: value,
 		next:  nil,
 		prev:  q.rail,
@@ -60,7 +64,7 @@ func (q *UnsafeQueue) Push(value interface{}) error {
 	return nil
 }
 
-func (q *UnsafeQueue) Front() (interface{}, error) {
+func (q *unsafeQueue) Front() (interface{}, error) {
 	if q.Empty() {
 		return nil, errors.New("This queue is empty.")
 	}
@@ -68,7 +72,7 @@ func (q *UnsafeQueue) Front() (interface{}, error) {
 	return q.head.next.value, nil
 }
 
-func (q *UnsafeQueue) Pop() (interface{}, error) {
+func (q *unsafeQueue) Pop() (interface{}, error) {
 	if q.Empty() {
 		return nil, errors.New("This queue is empty")
 	}
@@ -82,7 +86,7 @@ func (q *UnsafeQueue) Pop() (interface{}, error) {
 
 /*---------------------------------以下为接口实现---------------------------------------*/
 
-func (q *UnsafeQueue) CopyFromArray(values []interface{}) error {
+func (q *unsafeQueue) CopyFromArray(values []interface{}) error {
 	l := len(values)
 	if q.maxSize != -1 && q.size+l > q.maxSize {
 		return errors.New("Not enough free space.")
@@ -99,7 +103,7 @@ func (q *UnsafeQueue) CopyFromArray(values []interface{}) error {
 	return nil
 }
 
-func (q *UnsafeQueue) Fill() bool {
+func (q *unsafeQueue) Fill() bool {
 	f := false
 	if q.maxSize != -1 {
 		f = q.size == q.maxSize
@@ -108,15 +112,15 @@ func (q *UnsafeQueue) Fill() bool {
 	return f
 }
 
-func (q *UnsafeQueue) Empty() bool {
+func (q *unsafeQueue) Empty() bool {
 	return q.size == 0
 }
 
-func (q *UnsafeQueue) Size() int {
+func (q *unsafeQueue) Size() int {
 	return q.size
 }
 
-func (q *UnsafeQueue) Clear() bool {
+func (q *unsafeQueue) Clear() bool {
 	q.rail = q.head
 	q.head.prev = nil
 	q.head.next = nil
@@ -126,11 +130,11 @@ func (q *UnsafeQueue) Clear() bool {
 	return true
 }
 
-func (q *UnsafeQueue) MaxSize() int {
+func (q *unsafeQueue) MaxSize() int {
 	return q.maxSize
 }
 
-func (q *UnsafeQueue) SetMaxSize(maxSize int) error {
+func (q *unsafeQueue) SetMaxSize(maxSize int) error {
 	if maxSize != -1 && maxSize < q.size {
 		return errors.New("New maxSize is less than current size.")
 	}
@@ -138,4 +142,20 @@ func (q *UnsafeQueue) SetMaxSize(maxSize int) error {
 	q.maxSize = maxSize
 
 	return nil
+}
+
+func (q *unsafeQueue) String() string {
+	var b strings.Builder
+	b.WriteString("unsafeQueue{")
+
+	for p := q.head.next; p != nil; p = p.next {
+		if p != q.head.next {
+			b.WriteString(", ")
+		}
+		b.WriteString(fmt.Sprintf("%v", p.value))
+	}
+	b.WriteString("}")
+	fmt.Println(b.String())
+
+	return b.String()
 }

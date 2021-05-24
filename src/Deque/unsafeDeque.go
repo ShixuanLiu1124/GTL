@@ -2,33 +2,35 @@ package Deque
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 )
 
-type DQNode struct {
+type dQNode struct {
 	value interface{}
-	next  *DQNode
-	prev  *DQNode
+	next  *dQNode
+	prev  *dQNode
 }
 
-type UnsafeDeque struct {
+type unsafeDeque struct {
 	size    int
 	maxSize int
-	head    *DQNode
-	rail    *DQNode
+	head    *dQNode
+	rail    *dQNode
 }
 
-func New(maxSize int, values ...interface{}) (*UnsafeDeque, error) {
+func New(maxSize int, values ...interface{}) (*unsafeDeque, error) {
 	if maxSize != -1 && len(values) > maxSize {
 		return nil, errors.New("Length of values is too long.")
 	}
 
-	node := &DQNode{
+	node := &dQNode{
 		value: nil,
 		next:  nil,
 		prev:  nil,
 	}
 
-	q := &UnsafeDeque{
+	q := &unsafeDeque{
 		size:    0,
 		maxSize: maxSize,
 		head:    node,
@@ -36,18 +38,21 @@ func New(maxSize int, values ...interface{}) (*UnsafeDeque, error) {
 	}
 
 	for _, value := range values {
-		q.PushBack(value)
+		err := q.PushBack(value)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return q, nil
 }
 
-func (q *UnsafeDeque) PushFront(value interface{}) error {
+func (q *unsafeDeque) PushFront(value interface{}) error {
 	if q.Fill() {
 		return errors.New("This deque is fill.")
 	}
 
-	node := &DQNode{
+	node := &dQNode{
 		value: value,
 		next:  nil,
 		prev:  q.head,
@@ -59,12 +64,12 @@ func (q *UnsafeDeque) PushFront(value interface{}) error {
 	return nil
 }
 
-func (q *UnsafeDeque) PushBack(value interface{}) error {
+func (q *unsafeDeque) PushBack(value interface{}) error {
 	if q.Fill() {
 		return errors.New("This deque is fill.")
 	}
 
-	node := &DQNode{
+	node := &dQNode{
 		value: value,
 		next:  nil,
 		prev:  q.rail,
@@ -76,7 +81,7 @@ func (q *UnsafeDeque) PushBack(value interface{}) error {
 	return nil
 }
 
-func (q *UnsafeDeque) Front() (interface{}, error) {
+func (q *unsafeDeque) Front() (interface{}, error) {
 	if q.Empty() {
 		return nil, errors.New("This deque is empty.")
 	}
@@ -84,7 +89,7 @@ func (q *UnsafeDeque) Front() (interface{}, error) {
 	return q.head.next.value, nil
 }
 
-func (q *UnsafeDeque) Back() (interface{}, error) {
+func (q *unsafeDeque) Back() (interface{}, error) {
 	if q.Empty() {
 		return nil, errors.New("This deque is empty.")
 	}
@@ -92,7 +97,7 @@ func (q *UnsafeDeque) Back() (interface{}, error) {
 	return q.rail.value, nil
 }
 
-func (q *UnsafeDeque) PopFront() (interface{}, error) {
+func (q *unsafeDeque) PopFront() (interface{}, error) {
 	if q.Empty() {
 		return nil, errors.New("This deque is empty")
 	}
@@ -104,7 +109,7 @@ func (q *UnsafeDeque) PopFront() (interface{}, error) {
 	return value, nil
 }
 
-func (q *UnsafeDeque) PopBack() (interface{}, error) {
+func (q *unsafeDeque) PopBack() (interface{}, error) {
 	if q.Empty() {
 		return nil, errors.New("This deque is empty")
 	}
@@ -118,7 +123,7 @@ func (q *UnsafeDeque) PopBack() (interface{}, error) {
 
 /*---------------------------------以下为接口实现---------------------------------------*/
 
-func (q *UnsafeDeque) CopyFromArray(values []interface{}) error {
+func (q *unsafeDeque) CopyFromArray(values []interface{}) error {
 	l := len(values)
 	if q.maxSize != -1 && q.size+l > q.maxSize {
 		return errors.New("Not enough free space.")
@@ -135,7 +140,7 @@ func (q *UnsafeDeque) CopyFromArray(values []interface{}) error {
 	return nil
 }
 
-func (q *UnsafeDeque) Fill() bool {
+func (q *unsafeDeque) Fill() bool {
 	f := false
 	if q.MaxSize() != -1 {
 		f = q.Size() == q.MaxSize()
@@ -144,19 +149,19 @@ func (q *UnsafeDeque) Fill() bool {
 	return f
 }
 
-func (q *UnsafeDeque) Empty() bool {
+func (q *unsafeDeque) Empty() bool {
 	return q.Size() == 0
 }
 
-func (q *UnsafeDeque) Size() int {
+func (q *unsafeDeque) Size() int {
 	return q.size
 }
 
-func (q *UnsafeDeque) MaxSize() int {
+func (q *unsafeDeque) MaxSize() int {
 	return q.maxSize
 }
 
-func (q *UnsafeDeque) SetMaxSize(maxSize int) error {
+func (q *unsafeDeque) SetMaxSize(maxSize int) error {
 	if maxSize != -1 && maxSize < q.size {
 		return errors.New("New maxSize is less than current size.")
 	}
@@ -166,7 +171,7 @@ func (q *UnsafeDeque) SetMaxSize(maxSize int) error {
 	return nil
 }
 
-func (q *UnsafeDeque) Clear() bool {
+func (q *unsafeDeque) Clear() bool {
 	q.rail = q.head
 	q.head.prev = nil
 	q.head.next = nil
@@ -174,4 +179,20 @@ func (q *UnsafeDeque) Clear() bool {
 	q.size = 0
 
 	return true
+}
+
+func (q *unsafeDeque) String() string {
+	var b strings.Builder
+	b.WriteString("unsafeQueue{")
+
+	for p := q.head.next; p != nil; p = p.next {
+		if p != q.head.next {
+			b.WriteString(", ")
+		}
+		b.WriteString(fmt.Sprintf("%v", p.value))
+	}
+	b.WriteString("}")
+	fmt.Println(b.String())
+
+	return b.String()
 }

@@ -14,10 +14,10 @@ type OrderedPair struct {
 	Second interface{}
 }
 
-type UnsafeSet map[interface{}]struct{}
+type unsafeSet map[interface{}]struct{}
 
-func newThreadUnsafeSet() UnsafeSet {
-	return make(UnsafeSet)
+func newThreadUnsafeSet() unsafeSet {
+	return make(unsafeSet)
 }
 
 // Equal says whether two 2-tuples contain the same values in the same order.
@@ -30,7 +30,7 @@ func (pair *OrderedPair) Equal(other OrderedPair) bool {
 	return false
 }
 
-func (set *UnsafeSet) Add(i interface{}) bool {
+func (set *unsafeSet) Add(i interface{}) bool {
 	_, found := (*set)[i]
 	if found {
 		return false //False if it existed already
@@ -40,7 +40,7 @@ func (set *UnsafeSet) Add(i interface{}) bool {
 	return true
 }
 
-func (set *UnsafeSet) Contains(i ...interface{}) bool {
+func (set *unsafeSet) Contains(i ...interface{}) bool {
 	for _, val := range i {
 		if _, ok := (*set)[val]; !ok {
 			return false
@@ -49,8 +49,8 @@ func (set *UnsafeSet) Contains(i ...interface{}) bool {
 	return true
 }
 
-func (set *UnsafeSet) IsSubset(other Set) bool {
-	_ = other.(*UnsafeSet)
+func (set *unsafeSet) IsSubset(other Set) bool {
+	_ = other.(*unsafeSet)
 	if set.Cardinality() > other.Cardinality() {
 		return false
 	}
@@ -62,20 +62,20 @@ func (set *UnsafeSet) IsSubset(other Set) bool {
 	return true
 }
 
-func (set *UnsafeSet) IsProperSubset(other Set) bool {
+func (set *unsafeSet) IsProperSubset(other Set) bool {
 	return set.IsSubset(other) && !set.Equal(other)
 }
 
-func (set *UnsafeSet) IsSuperset(other Set) bool {
+func (set *unsafeSet) IsSuperset(other Set) bool {
 	return other.IsSubset(set)
 }
 
-func (set *UnsafeSet) IsProperSuperset(other Set) bool {
+func (set *unsafeSet) IsProperSuperset(other Set) bool {
 	return set.IsSuperset(other) && !set.Equal(other)
 }
 
-func (set *UnsafeSet) Union(other Set) Set {
-	o := other.(*UnsafeSet)
+func (set *unsafeSet) Union(other Set) Set {
+	o := other.(*unsafeSet)
 
 	unionedSet := newThreadUnsafeSet()
 
@@ -88,8 +88,8 @@ func (set *UnsafeSet) Union(other Set) Set {
 	return &unionedSet
 }
 
-func (set *UnsafeSet) Intersect(other Set) Set {
-	o := other.(*UnsafeSet)
+func (set *unsafeSet) Intersect(other Set) Set {
+	o := other.(*unsafeSet)
 
 	intersection := newThreadUnsafeSet()
 	// loop over smaller set
@@ -109,8 +109,8 @@ func (set *UnsafeSet) Intersect(other Set) Set {
 	return &intersection
 }
 
-func (set *UnsafeSet) Difference(other Set) Set {
-	_ = other.(*UnsafeSet)
+func (set *unsafeSet) Difference(other Set) Set {
+	_ = other.(*unsafeSet)
 
 	difference := newThreadUnsafeSet()
 	for elem := range *set {
@@ -121,27 +121,27 @@ func (set *UnsafeSet) Difference(other Set) Set {
 	return &difference
 }
 
-func (set *UnsafeSet) SymmetricDifference(other Set) Set {
-	_ = other.(*UnsafeSet)
+func (set *unsafeSet) SymmetricDifference(other Set) Set {
+	_ = other.(*unsafeSet)
 
 	aDiff := set.Difference(other)
 	bDiff := other.Difference(set)
 	return aDiff.Union(bDiff)
 }
 
-func (set *UnsafeSet) Clear() {
+func (set *unsafeSet) Clear() {
 	*set = newThreadUnsafeSet()
 }
 
-func (set *UnsafeSet) Remove(i interface{}) {
+func (set *unsafeSet) Remove(i interface{}) {
 	delete(*set, i)
 }
 
-func (set *UnsafeSet) Cardinality() int {
+func (set *unsafeSet) Cardinality() int {
 	return len(*set)
 }
 
-func (set *UnsafeSet) Each(cb func(interface{}) bool) {
+func (set *unsafeSet) Each(cb func(interface{}) bool) {
 	for elem := range *set {
 		if cb(elem) {
 			break
@@ -149,7 +149,7 @@ func (set *UnsafeSet) Each(cb func(interface{}) bool) {
 	}
 }
 
-func (set *UnsafeSet) Iter() <-chan interface{} {
+func (set *unsafeSet) Iter() <-chan interface{} {
 	ch := make(chan interface{})
 	go func() {
 		for elem := range *set {
@@ -161,7 +161,7 @@ func (set *UnsafeSet) Iter() <-chan interface{} {
 	return ch
 }
 
-func (set *UnsafeSet) Iterator() *Iterator {
+func (set *unsafeSet) Iterator() *iterator {
 	iterator, ch, stopCh := newIterator()
 
 	go func() {
@@ -179,8 +179,8 @@ func (set *UnsafeSet) Iterator() *Iterator {
 	return iterator
 }
 
-func (set *UnsafeSet) Equal(other Set) bool {
-	_ = other.(*UnsafeSet)
+func (set *unsafeSet) Equal(other Set) bool {
+	_ = other.(*unsafeSet)
 
 	if set.Cardinality() != other.Cardinality() {
 		return false
@@ -193,7 +193,7 @@ func (set *UnsafeSet) Equal(other Set) bool {
 	return true
 }
 
-func (set *UnsafeSet) Clone() Set {
+func (set *unsafeSet) Clone() Set {
 	clonedSet := newThreadUnsafeSet()
 	for elem := range *set {
 		clonedSet.Add(elem)
@@ -201,7 +201,7 @@ func (set *UnsafeSet) Clone() Set {
 	return &clonedSet
 }
 
-func (set *UnsafeSet) String() string {
+func (set *unsafeSet) String() string {
 	items := make([]string, 0, len(*set))
 
 	for elem := range *set {
@@ -215,7 +215,7 @@ func (pair OrderedPair) String() string {
 	return fmt.Sprintf("(%v, %v)", pair.First, pair.Second)
 }
 
-func (set *UnsafeSet) Pop() interface{} {
+func (set *unsafeSet) Pop() interface{} {
 	for item := range *set {
 		delete(*set, item)
 		return item
@@ -223,7 +223,7 @@ func (set *UnsafeSet) Pop() interface{} {
 	return nil
 }
 
-func (set *UnsafeSet) PowerSet() Set {
+func (set *unsafeSet) PowerSet() Set {
 	powSet := NewThreadUnsafeSet()
 	nullset := newThreadUnsafeSet()
 	powSet.Add(&nullset)
@@ -234,7 +234,7 @@ func (set *UnsafeSet) PowerSet() Set {
 		for er := range j {
 			p := newThreadUnsafeSet()
 			if reflect.TypeOf(er).Name() == "" {
-				k := er.(*UnsafeSet)
+				k := er.(*unsafeSet)
 				for ek := range *(k) {
 					p.Add(ek)
 				}
@@ -251,8 +251,8 @@ func (set *UnsafeSet) PowerSet() Set {
 	return powSet
 }
 
-func (set *UnsafeSet) CartesianProduct(other Set) Set {
-	o := other.(*UnsafeSet)
+func (set *unsafeSet) CartesianProduct(other Set) Set {
+	o := other.(*unsafeSet)
 	cartProduct := NewThreadUnsafeSet()
 
 	for i := range *set {
@@ -265,7 +265,7 @@ func (set *UnsafeSet) CartesianProduct(other Set) Set {
 	return cartProduct
 }
 
-func (set *UnsafeSet) ToSlice() []interface{} {
+func (set *unsafeSet) ToSlice() []interface{} {
 	keys := make([]interface{}, 0, set.Cardinality())
 	for elem := range *set {
 		keys = append(keys, elem)
@@ -275,7 +275,7 @@ func (set *UnsafeSet) ToSlice() []interface{} {
 }
 
 // MarshalJSON creates a JSON array from the set, it marshals all elements
-func (set *UnsafeSet) MarshalJSON() ([]byte, error) {
+func (set *unsafeSet) MarshalJSON() ([]byte, error) {
 	items := make([]string, 0, set.Cardinality())
 
 	for elem := range *set {
@@ -292,7 +292,7 @@ func (set *UnsafeSet) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON recreates a set from a JSON array, it only decodes
 // primitive types. Numbers are decoded as json.Number.
-func (set *UnsafeSet) UnmarshalJSON(b []byte) error {
+func (set *unsafeSet) UnmarshalJSON(b []byte) error {
 	var i []interface{}
 
 	d := json.NewDecoder(bytes.NewReader(b))
