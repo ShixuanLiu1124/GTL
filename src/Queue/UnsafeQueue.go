@@ -3,9 +3,9 @@ package Queue
 import "errors"
 
 type QNode struct {
-	data interface{}
-	next *QNode
-	prev *QNode
+	value interface{}
+	next  *QNode
+	prev  *QNode
 }
 
 type UnsafeQueue struct {
@@ -15,30 +15,43 @@ type UnsafeQueue struct {
 	rail    *QNode
 }
 
-func New(maxSize int) *UnsafeQueue {
-	node := &QNode{
-		data: nil,
-		next: nil,
-		prev: nil,
+func New(maxSize int, values ...interface{}) (*UnsafeQueue, error) {
+	if maxSize != -1 && len(values) > maxSize {
+		return nil, errors.New("Length of values is too long.")
 	}
 
-	return &UnsafeQueue{
+	node := &QNode{
+		value: nil,
+		next:  nil,
+		prev:  nil,
+	}
+
+	q := &UnsafeQueue{
 		size:    0,
 		maxSize: maxSize,
 		head:    node,
 		rail:    node,
 	}
+
+	for _, value := range values {
+		err := q.Push(value)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return q, nil
 }
 
-func (q *UnsafeQueue) Push(data interface{}) error {
+func (q *UnsafeQueue) Push(value interface{}) error {
 	if q.Fill() {
 		return errors.New("This queue is fill.")
 	}
 
 	node := &QNode{
-		data: data,
-		next: nil,
-		prev: q.rail,
+		value: value,
+		next:  nil,
+		prev:  q.rail,
 	}
 	q.rail.next = node
 	q.rail = node
@@ -52,7 +65,7 @@ func (q *UnsafeQueue) Front() (interface{}, error) {
 		return nil, errors.New("This queue is empty.")
 	}
 
-	return q.head.next.data, nil
+	return q.head.next.value, nil
 }
 
 func (q *UnsafeQueue) Pop() (interface{}, error) {
@@ -60,22 +73,22 @@ func (q *UnsafeQueue) Pop() (interface{}, error) {
 		return nil, errors.New("This queue is empty")
 	}
 
-	data := q.head.next.data
+	value := q.head.next.value
 	q.head.next = q.head.next.next
 	q.size--
 
-	return data, nil
+	return value, nil
 }
 
 /*---------------------------------以下为接口实现---------------------------------------*/
 
-func (q *UnsafeQueue) CopyFromArray(datas []interface{}) error {
-	l := len(datas)
+func (q *UnsafeQueue) CopyFromArray(values []interface{}) error {
+	l := len(values)
 	if q.maxSize != -1 && q.size+l > q.maxSize {
 		return errors.New("Not enough free space.")
 	}
 
-	for a := range datas {
+	for a := range values {
 		err := q.Push(a)
 		if err != nil {
 			return err
@@ -107,7 +120,7 @@ func (q *UnsafeQueue) Clear() bool {
 	q.rail = q.head
 	q.head.prev = nil
 	q.head.next = nil
-	q.head.data = nil
+	q.head.value = nil
 	q.size = 0
 
 	return true

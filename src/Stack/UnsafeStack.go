@@ -5,9 +5,9 @@ import (
 )
 
 type SNode struct {
-	data interface{}
-	next *SNode
-	prev *SNode
+	value interface{}
+	next  *SNode
+	prev  *SNode
 }
 
 type UnsafeStack struct {
@@ -17,30 +17,40 @@ type UnsafeStack struct {
 	rail    *SNode
 }
 
-func New(maxSize int) *UnsafeStack {
-	node := &SNode{
-		data: nil,
-		next: nil,
-		prev: nil,
+func New(maxSize int, values ...interface{}) (*UnsafeStack, error) {
+	if maxSize != -1 && len(values) > maxSize {
+		return nil, errors.New("Length of values is too long.")
 	}
 
-	return &UnsafeStack{
+	node := &SNode{
+		value: nil,
+		next:  nil,
+		prev:  nil,
+	}
+
+	s := &UnsafeStack{
 		size:    0,
 		maxSize: maxSize,
 		head:    node,
 		rail:    node,
 	}
+
+	for _, value := range values {
+		s.Push(value)
+	}
+
+	return s, nil
 }
 
-func (s *UnsafeStack) Push(data interface{}) error {
+func (s *UnsafeStack) Push(value interface{}) error {
 	if s.Fill() {
 		return errors.New("This stack is fill")
 	}
 
 	node := &SNode{
-		data: data,
-		next: nil,
-		prev: s.rail,
+		value: value,
+		next:  nil,
+		prev:  s.rail,
 	}
 	s.rail.next = node
 	s.rail = node
@@ -54,7 +64,7 @@ func (s *UnsafeStack) Top() (interface{}, error) {
 		return nil, errors.New("This stack is empty")
 	}
 
-	return s.rail.data, nil
+	return s.rail.value, nil
 }
 
 func (s *UnsafeStack) Pop() (interface{}, error) {
@@ -62,12 +72,12 @@ func (s *UnsafeStack) Pop() (interface{}, error) {
 		return nil, errors.New("This stack is empty")
 	}
 
-	data := s.rail.data
+	value := s.rail.value
 	s.rail = s.rail.prev
 	s.rail.next = nil
 	s.size--
 
-	return data, nil
+	return value, nil
 }
 
 func (s *UnsafeStack) SetMaxSize(maxSize int) error {
@@ -80,25 +90,19 @@ func (s *UnsafeStack) SetMaxSize(maxSize int) error {
 	return nil
 }
 
-func (s *UnsafeStack) CopyFromArray(datas []interface{}) error {
-	l := len(datas)
+func (s *UnsafeStack) CopyFromArray(values []interface{}) error {
+	l := len(values)
 	if s.maxSize != -1 && s.size+l > s.maxSize {
 		return errors.New("Not enough free space.")
 	}
 
-	for a := range datas {
+	for a := range values {
 		err := s.Push(a)
 		if err != nil {
 			return err
 		}
 	}
 	s.size += l
-
-	return nil
-}
-
-func (s *UnsafeStack) Copy(other *UnsafeStack) error {
-	// TODO: Copy method
 
 	return nil
 }
@@ -133,7 +137,7 @@ func (s *UnsafeStack) Clear() bool {
 	s.rail = s.head
 	s.head.prev = nil
 	s.head.next = nil
-	s.head.data = nil
+	s.head.value = nil
 	s.size = 0
 
 	return true

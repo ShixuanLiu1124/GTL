@@ -5,9 +5,9 @@ import (
 )
 
 type DQNode struct {
-	data interface{}
-	next *DQNode
-	prev *DQNode
+	value interface{}
+	next  *DQNode
+	prev  *DQNode
 }
 
 type UnsafeDeque struct {
@@ -17,30 +17,40 @@ type UnsafeDeque struct {
 	rail    *DQNode
 }
 
-func New(maxSize int) *UnsafeDeque {
-	node := &DQNode{
-		data: nil,
-		next: nil,
-		prev: nil,
+func New(maxSize int, values ...interface{}) (*UnsafeDeque, error) {
+	if maxSize != -1 && len(values) > maxSize {
+		return nil, errors.New("Length of values is too long.")
 	}
 
-	return &UnsafeDeque{
+	node := &DQNode{
+		value: nil,
+		next:  nil,
+		prev:  nil,
+	}
+
+	q := &UnsafeDeque{
 		size:    0,
 		maxSize: maxSize,
 		head:    node,
 		rail:    node,
 	}
+
+	for _, value := range values {
+		q.PushBack(value)
+	}
+
+	return q, nil
 }
 
-func (q *UnsafeDeque) PushFront(data interface{}) error {
+func (q *UnsafeDeque) PushFront(value interface{}) error {
 	if q.Fill() {
 		return errors.New("This deque is fill.")
 	}
 
 	node := &DQNode{
-		data: data,
-		next: nil,
-		prev: q.head,
+		value: value,
+		next:  nil,
+		prev:  q.head,
 	}
 	node.next = q.head.next
 	q.head.next = node
@@ -49,15 +59,15 @@ func (q *UnsafeDeque) PushFront(data interface{}) error {
 	return nil
 }
 
-func (q *UnsafeDeque) PushBack(data interface{}) error {
+func (q *UnsafeDeque) PushBack(value interface{}) error {
 	if q.Fill() {
 		return errors.New("This deque is fill.")
 	}
 
 	node := &DQNode{
-		data: data,
-		next: nil,
-		prev: q.rail,
+		value: value,
+		next:  nil,
+		prev:  q.rail,
 	}
 	q.rail.next = node
 	q.rail = node
@@ -71,7 +81,7 @@ func (q *UnsafeDeque) Front() (interface{}, error) {
 		return nil, errors.New("This deque is empty.")
 	}
 
-	return q.head.next.data, nil
+	return q.head.next.value, nil
 }
 
 func (q *UnsafeDeque) Back() (interface{}, error) {
@@ -79,7 +89,7 @@ func (q *UnsafeDeque) Back() (interface{}, error) {
 		return nil, errors.New("This deque is empty.")
 	}
 
-	return q.rail.data, nil
+	return q.rail.value, nil
 }
 
 func (q *UnsafeDeque) PopFront() (interface{}, error) {
@@ -87,11 +97,11 @@ func (q *UnsafeDeque) PopFront() (interface{}, error) {
 		return nil, errors.New("This deque is empty")
 	}
 
-	data := q.head.next.data
+	value := q.head.next.value
 	q.head.next = q.head.next.next
 	q.size--
 
-	return data, nil
+	return value, nil
 }
 
 func (q *UnsafeDeque) PopBack() (interface{}, error) {
@@ -99,22 +109,22 @@ func (q *UnsafeDeque) PopBack() (interface{}, error) {
 		return nil, errors.New("This deque is empty")
 	}
 
-	data := q.rail.data
+	value := q.rail.value
 	q.rail = q.rail.prev
 	q.size--
 
-	return data, nil
+	return value, nil
 }
 
 /*---------------------------------以下为接口实现---------------------------------------*/
 
-func (q *UnsafeDeque) CopyFromArray(datas []interface{}) error {
-	l := len(datas)
+func (q *UnsafeDeque) CopyFromArray(values []interface{}) error {
+	l := len(values)
 	if q.maxSize != -1 && q.size+l > q.maxSize {
 		return errors.New("Not enough free space.")
 	}
 
-	for a := range datas {
+	for a := range values {
 		err := q.PushBack(a)
 		if err != nil {
 			return err
@@ -160,7 +170,7 @@ func (q *UnsafeDeque) Clear() bool {
 	q.rail = q.head
 	q.head.prev = nil
 	q.head.next = nil
-	q.head.data = nil
+	q.head.value = nil
 	q.size = 0
 
 	return true
