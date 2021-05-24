@@ -30,33 +30,6 @@ func New(maxSize int) *UnsafeQueue {
 	}
 }
 
-func (q *UnsafeQueue) CopyFromArray(datas []interface{}) error {
-	l := len(datas)
-	if q.maxSize != -1 && q.size+l > q.maxSize {
-		return errors.New("Not enough free space.")
-	}
-
-	for a := range datas {
-		err := q.Push(a)
-		if err != nil {
-			return err
-		}
-	}
-	q.size += l
-
-	return nil
-}
-
-func (q *UnsafeQueue) SetMaxSize(maxSize int) error {
-	if maxSize != -1 && maxSize < q.size {
-		return errors.New("New maxSize is less than current size.")
-	}
-
-	q.maxSize = maxSize
-
-	return nil
-}
-
 func (q *UnsafeQueue) Push(data interface{}) error {
 	if q.Fill() {
 		return errors.New("This queue is fill.")
@@ -94,26 +67,40 @@ func (q *UnsafeQueue) Pop() (interface{}, error) {
 	return data, nil
 }
 
+/*---------------------------------以下为接口实现---------------------------------------*/
+
+func (q *UnsafeQueue) CopyFromArray(datas []interface{}) error {
+	l := len(datas)
+	if q.maxSize != -1 && q.size+l > q.maxSize {
+		return errors.New("Not enough free space.")
+	}
+
+	for a := range datas {
+		err := q.Push(a)
+		if err != nil {
+			return err
+		}
+	}
+	q.size += l
+
+	return nil
+}
+
 func (q *UnsafeQueue) Fill() bool {
 	f := false
-	if q.MaxSize() != -1 {
-		f = q.Size() == q.MaxSize()
+	if q.maxSize != -1 {
+		f = q.size == q.maxSize
 	}
 
 	return f
 }
 
 func (q *UnsafeQueue) Empty() bool {
-	return q.Size() == 0
+	return q.size == 0
 }
 
 func (q *UnsafeQueue) Size() int {
 	return q.size
-}
-
-func (q *UnsafeQueue) ToString() string {
-	// TODO: ToString method
-	return ""
 }
 
 func (q *UnsafeQueue) Clear() bool {
@@ -128,4 +115,14 @@ func (q *UnsafeQueue) Clear() bool {
 
 func (q *UnsafeQueue) MaxSize() int {
 	return q.maxSize
+}
+
+func (q *UnsafeQueue) SetMaxSize(maxSize int) error {
+	if maxSize != -1 && maxSize < q.size {
+		return errors.New("New maxSize is less than current size.")
+	}
+
+	q.maxSize = maxSize
+
+	return nil
 }
