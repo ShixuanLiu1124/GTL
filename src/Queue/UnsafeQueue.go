@@ -8,21 +8,21 @@ type QNode struct {
 	prev *QNode
 }
 
-type Queue struct {
+type UnsafeQueue struct {
 	size    int
 	maxSize int
 	head    *QNode
 	rail    *QNode
 }
 
-func New(maxSize int) *Queue {
+func New(maxSize int) *UnsafeQueue {
 	node := &QNode{
 		data: nil,
 		next: nil,
 		prev: nil,
 	}
 
-	return &Queue{
+	return &UnsafeQueue{
 		size:    0,
 		maxSize: maxSize,
 		head:    node,
@@ -30,7 +30,7 @@ func New(maxSize int) *Queue {
 	}
 }
 
-func (q *Queue) CopyFromArray(datas []interface{}) error {
+func (q *UnsafeQueue) CopyFromArray(datas []interface{}) error {
 	l := len(datas)
 	if q.maxSize != -1 && q.size+l > q.maxSize {
 		return errors.New("Not enough free space.")
@@ -47,7 +47,7 @@ func (q *Queue) CopyFromArray(datas []interface{}) error {
 	return nil
 }
 
-func (q *Queue) SetMaxSize(maxSize int) error {
+func (q *UnsafeQueue) SetMaxSize(maxSize int) error {
 	if maxSize != -1 && maxSize < q.size {
 		return errors.New("New maxSize is less than current size.")
 	}
@@ -57,7 +57,7 @@ func (q *Queue) SetMaxSize(maxSize int) error {
 	return nil
 }
 
-func (q *Queue) Push(data interface{}) error {
+func (q *UnsafeQueue) Push(data interface{}) error {
 	if q.Fill() {
 		return errors.New("This queue is fill.")
 	}
@@ -74,7 +74,7 @@ func (q *Queue) Push(data interface{}) error {
 	return nil
 }
 
-func (q *Queue) Front() (interface{}, error) {
+func (q *UnsafeQueue) Front() (interface{}, error) {
 	if q.Empty() {
 		return nil, errors.New("This queue is empty.")
 	}
@@ -82,7 +82,7 @@ func (q *Queue) Front() (interface{}, error) {
 	return q.head.next.data, nil
 }
 
-func (q *Queue) Pop() (interface{}, error) {
+func (q *UnsafeQueue) Pop() (interface{}, error) {
 	if q.Empty() {
 		return nil, errors.New("This queue is empty")
 	}
@@ -94,7 +94,7 @@ func (q *Queue) Pop() (interface{}, error) {
 	return data, nil
 }
 
-func (q *Queue) Fill() bool {
+func (q *UnsafeQueue) Fill() bool {
 	f := false
 	if q.MaxSize() != -1 {
 		f = q.Size() == q.MaxSize()
@@ -103,20 +103,20 @@ func (q *Queue) Fill() bool {
 	return f
 }
 
-func (q *Queue) Empty() bool {
+func (q *UnsafeQueue) Empty() bool {
 	return q.Size() == 0
 }
 
-func (q *Queue) Size() int {
+func (q *UnsafeQueue) Size() int {
 	return q.size
 }
 
-func (q *Queue) ToString() string {
+func (q *UnsafeQueue) ToString() string {
 	// TODO: ToString method
 	return ""
 }
 
-func (q *Queue) Clear() bool {
+func (q *UnsafeQueue) Clear() bool {
 	q.rail = q.head
 	q.head.prev = nil
 	q.head.next = nil
@@ -126,6 +126,6 @@ func (q *Queue) Clear() bool {
 	return true
 }
 
-func (q *Queue) MaxSize() int {
+func (q *UnsafeQueue) MaxSize() int {
 	return q.maxSize
 }

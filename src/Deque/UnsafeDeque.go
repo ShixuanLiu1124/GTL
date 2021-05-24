@@ -6,5 +6,5 @@ type DNode struct {
 	prev *DNode
 }
 
-type Deque struct {
+type UnsafeDeque struct {
 }

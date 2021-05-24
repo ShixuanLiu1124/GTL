@@ -10,21 +10,21 @@ type SNode struct {
 	prev *SNode
 }
 
-type Stack struct {
+type UnsafeStack struct {
 	size    int
 	maxSize int
 	head    *SNode
 	rail    *SNode
 }
 
-func New(maxSize int) *Stack {
+func New(maxSize int) *UnsafeStack {
 	node := &SNode{
 		data: nil,
 		next: nil,
 		prev: nil,
 	}
 
-	return &Stack{
+	return &UnsafeStack{
 		size:    0,
 		maxSize: maxSize,
 		head:    node,
@@ -32,7 +32,7 @@ func New(maxSize int) *Stack {
 	}
 }
 
-func (s *Stack) Push(data interface{}) error {
+func (s *UnsafeStack) Push(data interface{}) error {
 	if s.Fill() {
 		return errors.New("This stack is fill")
 	}
@@ -49,7 +49,7 @@ func (s *Stack) Push(data interface{}) error {
 	return nil
 }
 
-func (s *Stack) Top() (interface{}, error) {
+func (s *UnsafeStack) Top() (interface{}, error) {
 	if s.Empty() {
 		return nil, errors.New("This stack is empty")
 	}
@@ -57,7 +57,7 @@ func (s *Stack) Top() (interface{}, error) {
 	return s.rail.data, nil
 }
 
-func (s *Stack) Pop() (interface{}, error) {
+func (s *UnsafeStack) Pop() (interface{}, error) {
 	if s.Empty() {
 		return nil, errors.New("This stack is empty")
 	}
@@ -70,7 +70,7 @@ func (s *Stack) Pop() (interface{}, error) {
 	return data, nil
 }
 
-func (s *Stack) SetMaxSize(maxSize int) error {
+func (s *UnsafeStack) SetMaxSize(maxSize int) error {
 	if maxSize != -1 && maxSize < s.size {
 		return errors.New("New maxSize is less than current size.")
 	}
@@ -80,7 +80,7 @@ func (s *Stack) SetMaxSize(maxSize int) error {
 	return nil
 }
 
-func (s *Stack) CopyFromArray(datas []interface{}) error {
+func (s *UnsafeStack) CopyFromArray(datas []interface{}) error {
 	l := len(datas)
 	if s.maxSize != -1 && s.size+l > s.maxSize {
 		return errors.New("Not enough free space.")
@@ -97,13 +97,13 @@ func (s *Stack) CopyFromArray(datas []interface{}) error {
 	return nil
 }
 
-func (s *Stack) Copy(other *Stack) error {
+func (s *UnsafeStack) Copy(other *UnsafeStack) error {
 	// TODO: Copy method
 
 	return nil
 }
 
-func (s *Stack) Fill() bool {
+func (s *UnsafeStack) Fill() bool {
 	f := false
 	if s.maxSize != -1 && s.size == s.maxSize {
 		f = true
@@ -111,25 +111,25 @@ func (s *Stack) Fill() bool {
 	return f
 }
 
-func (s *Stack) Empty() bool {
+func (s *UnsafeStack) Empty() bool {
 	return s.size == 0
 }
 
-func (s *Stack) Size() int {
+func (s *UnsafeStack) Size() int {
 	return s.size
 }
 
-func (s *Stack) MaxSize() int {
+func (s *UnsafeStack) MaxSize() int {
 	return s.maxSize
 }
 
-func (s *Stack) ToString() string {
+func (s *UnsafeStack) ToString() string {
 	// TODO ToString method
 
 	return ""
 }
 
-func (s *Stack) Clear() bool {
+func (s *UnsafeStack) Clear() bool {
 	s.rail = s.head
 	s.head.prev = nil
 	s.head.next = nil
