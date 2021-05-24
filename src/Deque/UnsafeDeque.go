@@ -17,9 +17,41 @@ type UnsafeDeque struct {
 	rail    *DQNode
 }
 
+func New(maxSize int) *UnsafeDeque {
+	node := &DQNode{
+		data: nil,
+		next: nil,
+		prev: nil,
+	}
+
+	return &UnsafeDeque{
+		size:    0,
+		maxSize: maxSize,
+		head:    node,
+		rail:    node,
+	}
+}
+
+func (q *UnsafeDeque) PushFront(data interface{}) error {
+	if q.Fill() {
+		return errors.New("This deque is fill.")
+	}
+
+	node := &DQNode{
+		data: data,
+		next: nil,
+		prev: q.head,
+	}
+	node.next = q.head.next
+	q.head.next = node
+	q.size++
+
+	return nil
+}
+
 func (q *UnsafeDeque) PushBack(data interface{}) error {
 	if q.Fill() {
-		return errors.New("This queue is fill.")
+		return errors.New("This deque is fill.")
 	}
 
 	node := &DQNode{
@@ -36,19 +68,39 @@ func (q *UnsafeDeque) PushBack(data interface{}) error {
 
 func (q *UnsafeDeque) Front() (interface{}, error) {
 	if q.Empty() {
-		return nil, errors.New("This queue is empty.")
+		return nil, errors.New("This deque is empty.")
 	}
 
 	return q.head.next.data, nil
 }
 
-func (q *UnsafeDeque) PopBack() (interface{}, error) {
+func (q *UnsafeDeque) Back() (interface{}, error) {
 	if q.Empty() {
-		return nil, errors.New("This queue is empty")
+		return nil, errors.New("This deque is empty.")
+	}
+
+	return q.rail.data, nil
+}
+
+func (q *UnsafeDeque) PopFront() (interface{}, error) {
+	if q.Empty() {
+		return nil, errors.New("This deque is empty")
 	}
 
 	data := q.head.next.data
 	q.head.next = q.head.next.next
+	q.size--
+
+	return data, nil
+}
+
+func (q *UnsafeDeque) PopBack() (interface{}, error) {
+	if q.Empty() {
+		return nil, errors.New("This deque is empty")
+	}
+
+	data := q.rail.data
+	q.rail = q.rail.prev
 	q.size--
 
 	return data, nil
