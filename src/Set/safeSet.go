@@ -7,8 +7,8 @@ type safeSet struct {
 	sync.RWMutex
 }
 
-func newThreadSafeSet() safeSet {
-	return safeSet{s: newThreadUnsafeSet()}
+func newSafeSet() safeSet {
+	return safeSet{s: newUnsafeSet()}
 }
 
 func (set *safeSet) Add(i interface{}) bool {
@@ -110,7 +110,7 @@ func (set *safeSet) SymmetricDifference(other Set) Set {
 
 func (set *safeSet) Clear() {
 	set.Lock()
-	set.s = newThreadUnsafeSet()
+	set.s = newUnsafeSet()
 	set.Unlock()
 }
 
@@ -120,20 +120,10 @@ func (set *safeSet) Remove(i interface{}) {
 	set.Unlock()
 }
 
-func (set *safeSet) Cardinality() int {
+func (set *safeSet) Size() int {
 	set.RLock()
 	defer set.RUnlock()
 	return len(set.s)
-}
-
-func (set *safeSet) Each(cb func(interface{}) bool) {
-	set.RLock()
-	for elem := range set.s {
-		if cb(elem) {
-			break
-		}
-	}
-	set.RUnlock()
 }
 
 func (set *safeSet) Iter() <-chan interface{} {
@@ -151,7 +141,7 @@ func (set *safeSet) Iter() <-chan interface{} {
 	return ch
 }
 
-func (set *safeSet) Iterator() *iterator {
+func (set *safeSet) Iterator() *Iterator {
 	iterator, ch, stopCh := newIterator()
 
 	go func() {
@@ -199,25 +189,6 @@ func (set *safeSet) String() string {
 	return ret
 }
 
-func (set *safeSet) PowerSet() Set {
-	set.RLock()
-	unsafePowerSet := set.s.PowerSet().(*unsafeSet)
-	set.RUnlock()
-
-	ret := &safeSet{s: newThreadUnsafeSet()}
-	for subset := range unsafePowerSet.Iter() {
-		unsafeSubset := subset.(*unsafeSet)
-		ret.Add(&safeSet{s: *unsafeSubset})
-	}
-	return ret
-}
-
-func (set *safeSet) Pop() interface{} {
-	set.Lock()
-	defer set.Unlock()
-	return set.s.Pop()
-}
-
 func (set *safeSet) CartesianProduct(other Set) Set {
 	o := other.(*safeSet)
 
@@ -232,7 +203,7 @@ func (set *safeSet) CartesianProduct(other Set) Set {
 }
 
 func (set *safeSet) ToSlice() []interface{} {
-	keys := make([]interface{}, 0, set.Cardinality())
+	keys := make([]interface{}, 0, set.Size())
 	set.RLock()
 	for elem := range set.s {
 		keys = append(keys, elem)

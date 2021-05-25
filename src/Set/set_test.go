@@ -26,7 +26,7 @@ func assertEqual(a, b Set, t *testing.T) {
 
 func Test_NewSet(t *testing.T) {
 	a := NewSet()
-	if a.Cardinality() != 0 {
+	if a.Size() != 0 {
 		t.Error("NewSet should start out as an empty set")
 	}
 
@@ -40,7 +40,7 @@ func Test_NewSet(t *testing.T) {
 func Test_NewUnsafeSet(t *testing.T) {
 	a := NewThreadUnsafeSet()
 
-	if a.Cardinality() != 0 {
+	if a.Size() != 0 {
 		t.Error("NewSet should start out as an empty set")
 	}
 }
@@ -48,7 +48,7 @@ func Test_NewUnsafeSet(t *testing.T) {
 func Test_AddSet(t *testing.T) {
 	a := makeSet([]int{1, 2, 3})
 
-	if a.Cardinality() != 3 {
+	if a.Size() != 3 {
 		t.Error("AddSet does not have a size of 3 even though 3 items were added to a new set")
 	}
 }
@@ -56,7 +56,7 @@ func Test_AddSet(t *testing.T) {
 func Test_AddUnsafeSet(t *testing.T) {
 	a := makeUnsafeSet([]int{1, 2, 3})
 
-	if a.Cardinality() != 3 {
+	if a.Size() != 3 {
 		t.Error("AddSet does not have a size of 3 even though 3 items were added to a new set")
 	}
 }
@@ -64,7 +64,7 @@ func Test_AddUnsafeSet(t *testing.T) {
 func Test_AddSetNoDuplicate(t *testing.T) {
 	a := makeSet([]int{7, 5, 3, 7})
 
-	if a.Cardinality() != 3 {
+	if a.Size() != 3 {
 		t.Error("AddSetNoDuplicate set should have 3 elements since 7 is a duplicate")
 	}
 
@@ -76,7 +76,7 @@ func Test_AddSetNoDuplicate(t *testing.T) {
 func Test_AddUnsafeSetNoDuplicate(t *testing.T) {
 	a := makeUnsafeSet([]int{7, 5, 3, 7})
 
-	if a.Cardinality() != 3 {
+	if a.Size() != 3 {
 		t.Error("AddSetNoDuplicate set should have 3 elements since 7 is a duplicate")
 	}
 
@@ -90,7 +90,7 @@ func Test_RemoveSet(t *testing.T) {
 
 	a.Remove(3)
 
-	if a.Cardinality() != 2 {
+	if a.Size() != 2 {
 		t.Error("RemoveSet should only have 2 items in the set")
 	}
 
@@ -101,7 +101,7 @@ func Test_RemoveSet(t *testing.T) {
 	a.Remove(6)
 	a.Remove(1)
 
-	if a.Cardinality() != 0 {
+	if a.Size() != 0 {
 		t.Error("RemoveSet should be an empty set after removing 6 and 1")
 	}
 }
@@ -111,7 +111,7 @@ func Test_RemoveUnsafeSet(t *testing.T) {
 
 	a.Remove(3)
 
-	if a.Cardinality() != 2 {
+	if a.Size() != 2 {
 		t.Error("RemoveSet should only have 2 items in the set")
 	}
 
@@ -122,7 +122,7 @@ func Test_RemoveUnsafeSet(t *testing.T) {
 	a.Remove(6)
 	a.Remove(1)
 
-	if a.Cardinality() != 0 {
+	if a.Size() != 0 {
 		t.Error("RemoveSet should be an empty set after removing 6 and 1")
 	}
 }
@@ -204,7 +204,7 @@ func Test_ClearSet(t *testing.T) {
 
 	a.Clear()
 
-	if a.Cardinality() != 0 {
+	if a.Size() != 0 {
 		t.Error("ClearSet should be an empty set")
 	}
 }
@@ -214,7 +214,7 @@ func Test_ClearUnsafeSet(t *testing.T) {
 
 	a.Clear()
 
-	if a.Cardinality() != 0 {
+	if a.Size() != 0 {
 		t.Error("ClearSet should be an empty set")
 	}
 }
@@ -222,31 +222,31 @@ func Test_ClearUnsafeSet(t *testing.T) {
 func Test_CardinalitySet(t *testing.T) {
 	a := NewSet()
 
-	if a.Cardinality() != 0 {
+	if a.Size() != 0 {
 		t.Error("set should be an empty set")
 	}
 
 	a.Add(1)
 
-	if a.Cardinality() != 1 {
+	if a.Size() != 1 {
 		t.Error("set should have a size of 1")
 	}
 
 	a.Remove(1)
 
-	if a.Cardinality() != 0 {
+	if a.Size() != 0 {
 		t.Error("set should be an empty set")
 	}
 
 	a.Add(9)
 
-	if a.Cardinality() != 1 {
+	if a.Size() != 1 {
 		t.Error("set should have a size of 1")
 	}
 
 	a.Clear()
 
-	if a.Cardinality() != 0 {
+	if a.Size() != 0 {
 		t.Error("set should have a size of 1")
 	}
 }
@@ -254,31 +254,31 @@ func Test_CardinalitySet(t *testing.T) {
 func Test_CardinalityUnsafeSet(t *testing.T) {
 	a := NewThreadUnsafeSet()
 
-	if a.Cardinality() != 0 {
+	if a.Size() != 0 {
 		t.Error("set should be an empty set")
 	}
 
 	a.Add(1)
 
-	if a.Cardinality() != 1 {
+	if a.Size() != 1 {
 		t.Error("set should have a size of 1")
 	}
 
 	a.Remove(1)
 
-	if a.Cardinality() != 0 {
+	if a.Size() != 0 {
 		t.Error("set should be an empty set")
 	}
 
 	a.Add(9)
 
-	if a.Cardinality() != 1 {
+	if a.Size() != 1 {
 		t.Error("set should have a size of 1")
 	}
 
 	a.Clear()
 
-	if a.Cardinality() != 0 {
+	if a.Size() != 0 {
 		t.Error("set should have a size of 1")
 	}
 }
@@ -502,7 +502,7 @@ func Test_SetUnion(t *testing.T) {
 
 	c := a.Union(b)
 
-	if c.Cardinality() != 5 {
+	if c.Size() != 5 {
 		t.Error("set c is unioned with an empty set and therefore should have 5 elements in it")
 	}
 
@@ -512,7 +512,7 @@ func Test_SetUnion(t *testing.T) {
 	d.Add(0)
 
 	e := c.Union(d)
-	if e.Cardinality() != 8 {
+	if e.Size() != 8 {
 		t.Error("set e should should have 8 elements in it after being unioned with set c to d")
 	}
 
@@ -521,7 +521,7 @@ func Test_SetUnion(t *testing.T) {
 	f.Add(3)
 
 	g := f.Union(e)
-	if g.Cardinality() != 8 {
+	if g.Size() != 8 {
 		t.Error("set g should still have 8 elements in it after being unioned with set f that has duplicates")
 	}
 }
@@ -538,7 +538,7 @@ func Test_UnsafeSetUnion(t *testing.T) {
 
 	c := a.Union(b)
 
-	if c.Cardinality() != 5 {
+	if c.Size() != 5 {
 		t.Error("set c is unioned with an empty set and therefore should have 5 elements in it")
 	}
 
@@ -548,7 +548,7 @@ func Test_UnsafeSetUnion(t *testing.T) {
 	d.Add(0)
 
 	e := c.Union(d)
-	if e.Cardinality() != 8 {
+	if e.Size() != 8 {
 		t.Error("set e should should have 8 elements in it after being unioned with set c to d")
 	}
 
@@ -557,7 +557,7 @@ func Test_UnsafeSetUnion(t *testing.T) {
 	f.Add(3)
 
 	g := f.Union(e)
-	if g.Cardinality() != 8 {
+	if g.Size() != 8 {
 		t.Error("set g should still have 8 elements in it after being unioned with set f that has duplicates")
 	}
 }
@@ -575,7 +575,7 @@ func Test_SetIntersect(t *testing.T) {
 
 	c := a.Intersect(b)
 
-	if c.Cardinality() != 0 {
+	if c.Size() != 0 {
 		t.Error("set c should be the empty set because there is no common items to intersect")
 	}
 
@@ -584,7 +584,7 @@ func Test_SetIntersect(t *testing.T) {
 
 	d := a.Intersect(b)
 
-	if !(d.Cardinality() == 1 && d.Contains(10)) {
+	if !(d.Size() == 1 && d.Contains(10)) {
 		t.Error("set d should have a size of 1 and contain the item 10")
 	}
 }
@@ -602,7 +602,7 @@ func Test_UnsafeSetIntersect(t *testing.T) {
 
 	c := a.Intersect(b)
 
-	if c.Cardinality() != 0 {
+	if c.Size() != 0 {
 		t.Error("set c should be the empty set because there is no common items to intersect")
 	}
 
@@ -611,7 +611,7 @@ func Test_UnsafeSetIntersect(t *testing.T) {
 
 	d := a.Intersect(b)
 
-	if !(d.Cardinality() == 1 && d.Contains(10)) {
+	if !(d.Size() == 1 && d.Contains(10)) {
 		t.Error("set d should have a size of 1 and contain the item 10")
 	}
 }
@@ -632,7 +632,7 @@ func Test_SetDifference(t *testing.T) {
 
 	c := a.Difference(b)
 
-	if !(c.Cardinality() == 1 && c.Contains(2)) {
+	if !(c.Size() == 1 && c.Contains(2)) {
 		t.Error("the difference of set a to b is the set of 1 item: 2")
 	}
 }
@@ -653,7 +653,7 @@ func Test_UnsafeSetDifference(t *testing.T) {
 
 	c := a.Difference(b)
 
-	if !(c.Cardinality() == 1 && c.Contains(2)) {
+	if !(c.Size() == 1 && c.Contains(2)) {
 		t.Error("the difference of set a to b is the set of 1 item: 2")
 	}
 }
@@ -675,7 +675,7 @@ func Test_SetSymmetricDifference(t *testing.T) {
 
 	c := a.SymmetricDifference(b)
 
-	if !(c.Cardinality() == 6 && c.Contains(2) && c.Contains(45) && c.Contains(4) && c.Contains(5) && c.Contains(6) && c.Contains(99)) {
+	if !(c.Size() == 6 && c.Contains(2) && c.Contains(45) && c.Contains(4) && c.Contains(5) && c.Contains(6) && c.Contains(99)) {
 		t.Error("the symmetric difference of set a to b is the set of 6 items: 2, 45, 4, 5, 6, 99")
 	}
 }
@@ -697,7 +697,7 @@ func Test_UnsafeSetSymmetricDifference(t *testing.T) {
 
 	c := a.SymmetricDifference(b)
 
-	if !(c.Cardinality() == 6 && c.Contains(2) && c.Contains(45) && c.Contains(4) && c.Contains(5) && c.Contains(6) && c.Contains(99)) {
+	if !(c.Size() == 6 && c.Contains(2) && c.Contains(45) && c.Contains(4) && c.Contains(5) && c.Contains(6) && c.Contains(99)) {
 		t.Error("the symmetric difference of set a to b is the set of 6 items: 2, 45, 4, 5, 6, 99")
 	}
 }
@@ -905,7 +905,7 @@ func Test_Iterator(t *testing.T) {
 	}
 
 	if !a.Equal(b) {
-		t.Error("The sets are not equal after iterating (iterator) through the first set")
+		t.Error("The sets are not equal after iterating (Iterator) through the first set")
 	}
 }
 
@@ -923,7 +923,7 @@ func Test_UnsafeIterator(t *testing.T) {
 	}
 
 	if !a.Equal(b) {
-		t.Error("The sets are not equal after iterating (iterator) through the first set")
+		t.Error("The sets are not equal after iterating (Iterator) through the first set")
 	}
 }
 
@@ -938,7 +938,7 @@ func Test_IteratorStop(t *testing.T) {
 	it := a.Iterator()
 	it.Stop()
 	for range it.C {
-		t.Error("The iterating (iterator) did not stop after Stop() has been called")
+		t.Error("The iterating (Iterator) did not stop after Stop() has been called")
 	}
 }
 
@@ -957,11 +957,11 @@ func Test_PopSafe(t *testing.T) {
 	captureSet.Add(a.Pop())
 	finalNil := a.Pop()
 
-	if captureSet.Cardinality() != 4 {
+	if captureSet.Size() != 4 {
 		t.Error("unexpected captureSet cardinality; should be 4")
 	}
 
-	if a.Cardinality() != 0 {
+	if a.Size() != 0 {
 		t.Error("unepxected a cardinality; should be zero")
 	}
 
@@ -989,11 +989,11 @@ func Test_PopUnsafe(t *testing.T) {
 	captureSet.Add(a.Pop())
 	finalNil := a.Pop()
 
-	if captureSet.Cardinality() != 4 {
+	if captureSet.Size() != 4 {
 		t.Error("unexpected captureSet cardinality; should be 4")
 	}
 
-	if a.Cardinality() != 0 {
+	if a.Size() != 0 {
 		t.Error("unepxected a cardinality; should be zero")
 	}
 
@@ -1015,7 +1015,7 @@ func Test_PowerSet(t *testing.T) {
 	a.Add(4)
 
 	b := a.PowerSet()
-	if b.Cardinality() != 16 {
+	if b.Size() != 16 {
 		t.Error("unexpected PowerSet cardinality")
 	}
 }
@@ -1071,17 +1071,17 @@ func Test_EmptySetProperties(t *testing.T) {
 	}
 
 	c = a.CartesianProduct(empty)
-	if c.Cardinality() != 0 {
+	if c.Size() != 0 {
 		t.Error("Cartesian product of any set and the empty set must be the empty set")
 	}
 
-	if empty.Cardinality() != 0 {
-		t.Error("Cardinality of the empty set is supposed to be zero")
+	if empty.Size() != 0 {
+		t.Error("Size of the empty set is supposed to be zero")
 	}
 
 	c = empty.PowerSet()
-	if c.Cardinality() != 1 {
-		t.Error("Cardinality of the power set of the empty set is supposed to be one { {} }")
+	if c.Size() != 1 {
+		t.Error("Size of the power set of the empty set is supposed to be one { {} }")
 	}
 }
 
@@ -1103,18 +1103,18 @@ func Test_CartesianProduct(t *testing.T) {
 	c := a.CartesianProduct(b)
 	d := b.CartesianProduct(a)
 
-	if c.Cardinality() != d.Cardinality() {
-		t.Error("Cardinality of AxB must be equal to BxA")
+	if c.Size() != d.Size() {
+		t.Error("Size of AxB must be equal to BxA")
 	}
 
-	if c.Cardinality() != (a.Cardinality() * b.Cardinality()) {
+	if c.Size() != (a.Size() * b.Size()) {
 		t.Error("Unexpected cardinality for cartesian product set")
 	}
 
 	c = a.CartesianProduct(empty)
 	d = empty.CartesianProduct(b)
 
-	if c.Cardinality() != 0 || d.Cardinality() != 0 {
+	if c.Size() != 0 || d.Size() != 0 {
 		t.Error("Cartesian product of any set and the empty set Ax0 || 0xA must be the empty set")
 	}
 }
@@ -1122,7 +1122,7 @@ func Test_CartesianProduct(t *testing.T) {
 func Test_ToSliceUnthreadsafe(t *testing.T) {
 	s := makeUnsafeSet([]int{1, 2, 3})
 	setAsSlice := s.ToSlice()
-	if len(setAsSlice) != s.Cardinality() {
+	if len(setAsSlice) != s.Size() {
 		t.Errorf("Set length is incorrect: %v", len(setAsSlice))
 	}
 
@@ -1167,7 +1167,7 @@ func Test_Example(t *testing.T) {
 	   fmt.Println(scienceClasses.Intersect(requiredClasses)) //Set{Biology}
 
 	   //How many bonus classes do you offer?
-	   fmt.Println(bonusClasses.Cardinality()) //2
+	   fmt.Println(bonusClasses.Size()) //2
 
 	   //Do you have the following classes? Welding, Automotive and English?
 	   fmt.Println(allClasses.ContainsAll("Welding", "Automotive", "English"))

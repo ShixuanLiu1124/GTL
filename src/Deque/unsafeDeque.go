@@ -19,7 +19,7 @@ type unsafeDeque struct {
 	rail    *dQNode
 }
 
-func New(maxSize int, values ...interface{}) (*unsafeDeque, error) {
+func NewUnsafeDeque(maxSize int, values ...interface{}) (*unsafeDeque, error) {
 	if maxSize != -1 && len(values) > maxSize {
 		return nil, errors.New("Length of values is too long.")
 	}
@@ -129,8 +129,8 @@ func (q *unsafeDeque) CopyFromArray(values []interface{}) error {
 		return errors.New("Not enough free space.")
 	}
 
-	for a := range values {
-		err := q.PushBack(a)
+	for _, value := range values {
+		err := q.PushBack(value)
 		if err != nil {
 			return err
 		}
@@ -183,7 +183,7 @@ func (q *unsafeDeque) Clear() bool {
 
 func (q *unsafeDeque) String() string {
 	var b strings.Builder
-	b.WriteString("unsafeQueue{")
+	b.WriteString("SafeQueue{")
 
 	for p := q.head.next; p != nil; p = p.next {
 		if p != q.head.next {
@@ -192,7 +192,17 @@ func (q *unsafeDeque) String() string {
 		b.WriteString(fmt.Sprintf("%v", p.value))
 	}
 	b.WriteString("}")
-	fmt.Println(b.String())
 
 	return b.String()
+}
+
+// ToSlice 将队列以切片形式返回
+func (q *unsafeDeque) ToSlice() []interface{} {
+	ans := make([]interface{}, q.size)
+
+	for p := q.head.next; p != nil; p = p.next {
+		ans = append(ans, p.value)
+	}
+
+	return ans
 }

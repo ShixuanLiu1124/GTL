@@ -16,17 +16,9 @@ func ExampleIterator() {
 		&YourType{Name: "Nick"},
 	})
 
-	var found *YourType
 	it := set.Iterator()
 
-	for elem := range it.C {
-		if elem.(*YourType).Name == "John" {
-			found = elem.(*YourType)
-			it.Stop()
-		}
+	for i := range it.C {
+		fmt.Println(i)
 	}
-
-	fmt.Printf("Found %+v\n", found)
-
-	// Output: Found &{Name:John}
 }

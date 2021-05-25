@@ -9,4 +9,5 @@ type Container interface {
 	Clear() bool
 	String() string
 	CopyFromArray([]interface{}) error
+	ToSlice() []interface{}
 }

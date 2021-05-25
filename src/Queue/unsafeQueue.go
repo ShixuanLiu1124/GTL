@@ -92,8 +92,8 @@ func (q *unsafeQueue) CopyFromArray(values []interface{}) error {
 		return errors.New("Not enough free space.")
 	}
 
-	for a := range values {
-		err := q.Push(a)
+	for _, value := range values {
+		err := q.Push(value)
 		if err != nil {
 			return err
 		}
@@ -155,7 +155,17 @@ func (q *unsafeQueue) String() string {
 		b.WriteString(fmt.Sprintf("%v", p.value))
 	}
 	b.WriteString("}")
-	fmt.Println(b.String())
 
 	return b.String()
+}
+
+// ToSlice 将队列以切片形式返回
+func (q *unsafeQueue) ToSlice() []interface{} {
+	ans := make([]interface{}, q.size)
+
+	for p := q.head.next; p != nil; p = p.next {
+		ans = append(ans, p.value)
+	}
+
+	return ans
 }

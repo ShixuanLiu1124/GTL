@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strings"
 )
 
@@ -16,7 +15,7 @@ type OrderedPair struct {
 
 type unsafeSet map[interface{}]struct{}
 
-func newThreadUnsafeSet() unsafeSet {
+func newUnsafeSet() unsafeSet {
 	return make(unsafeSet)
 }
 
@@ -49,9 +48,10 @@ func (set *unsafeSet) Contains(i ...interface{}) bool {
 	return true
 }
 
+// IsSubset 判断other是否是s的子集
 func (set *unsafeSet) IsSubset(other Set) bool {
 	_ = other.(*unsafeSet)
-	if set.Cardinality() > other.Cardinality() {
+	if set.Size() > other.Size() {
 		return false
 	}
 	for elem := range *set {
@@ -62,22 +62,26 @@ func (set *unsafeSet) IsSubset(other Set) bool {
 	return true
 }
 
+// IsProperSubset 判断other是否是s的真子集
 func (set *unsafeSet) IsProperSubset(other Set) bool {
 	return set.IsSubset(other) && !set.Equal(other)
 }
 
+// IsSuperset 判断other是否是s的超集
 func (set *unsafeSet) IsSuperset(other Set) bool {
 	return other.IsSubset(set)
 }
 
+// IsProperSuperset 判断other是否是s的真超集
 func (set *unsafeSet) IsProperSuperset(other Set) bool {
 	return set.IsSuperset(other) && !set.Equal(other)
 }
 
+// Union 求该集合s和other的并集
 func (set *unsafeSet) Union(other Set) Set {
 	o := other.(*unsafeSet)
 
-	unionedSet := newThreadUnsafeSet()
+	unionedSet := newUnsafeSet()
 
 	for elem := range *set {
 		unionedSet.Add(elem)
@@ -88,12 +92,13 @@ func (set *unsafeSet) Union(other Set) Set {
 	return &unionedSet
 }
 
+// Intersect 求s和other的交集
 func (set *unsafeSet) Intersect(other Set) Set {
 	o := other.(*unsafeSet)
 
-	intersection := newThreadUnsafeSet()
+	intersection := newUnsafeSet()
 	// loop over smaller set
-	if set.Cardinality() < other.Cardinality() {
+	if set.Size() < other.Size() {
 		for elem := range *set {
 			if other.Contains(elem) {
 				intersection.Add(elem)
@@ -109,10 +114,11 @@ func (set *unsafeSet) Intersect(other Set) Set {
 	return &intersection
 }
 
+// Difference 求s - other差集
 func (set *unsafeSet) Difference(other Set) Set {
 	_ = other.(*unsafeSet)
 
-	difference := newThreadUnsafeSet()
+	difference := newUnsafeSet()
 	for elem := range *set {
 		if !other.Contains(elem) {
 			difference.Add(elem)
@@ -121,32 +127,27 @@ func (set *unsafeSet) Difference(other Set) Set {
 	return &difference
 }
 
+// SymmetricDifference 求该集合s和other的对称差集
+// 对称差集：只属于其中一个集合，而不属于另一个集合的元素组成的集合。
 func (set *unsafeSet) SymmetricDifference(other Set) Set {
 	_ = other.(*unsafeSet)
 
 	aDiff := set.Difference(other)
 	bDiff := other.Difference(set)
+
 	return aDiff.Union(bDiff)
 }
 
 func (set *unsafeSet) Clear() {
-	*set = newThreadUnsafeSet()
+	*set = newUnsafeSet()
 }
 
 func (set *unsafeSet) Remove(i interface{}) {
 	delete(*set, i)
 }
 
-func (set *unsafeSet) Cardinality() int {
+func (set *unsafeSet) Size() int {
 	return len(*set)
-}
-
-func (set *unsafeSet) Each(cb func(interface{}) bool) {
-	for elem := range *set {
-		if cb(elem) {
-			break
-		}
-	}
 }
 
 func (set *unsafeSet) Iter() <-chan interface{} {
@@ -161,9 +162,10 @@ func (set *unsafeSet) Iter() <-chan interface{} {
 	return ch
 }
 
-func (set *unsafeSet) Iterator() *iterator {
+func (set *unsafeSet) Iterator() *Iterator {
 	iterator, ch, stopCh := newIterator()
 
+	// 开启一个go程对返回的iterator进行监听
 	go func() {
 	L:
 		for elem := range *set {
@@ -182,7 +184,7 @@ func (set *unsafeSet) Iterator() *iterator {
 func (set *unsafeSet) Equal(other Set) bool {
 	_ = other.(*unsafeSet)
 
-	if set.Cardinality() != other.Cardinality() {
+	if set.Size() != other.Size() {
 		return false
 	}
 	for elem := range *set {
@@ -194,7 +196,7 @@ func (set *unsafeSet) Equal(other Set) bool {
 }
 
 func (set *unsafeSet) Clone() Set {
-	clonedSet := newThreadUnsafeSet()
+	clonedSet := newUnsafeSet()
 	for elem := range *set {
 		clonedSet.Add(elem)
 	}
@@ -215,42 +217,6 @@ func (pair OrderedPair) String() string {
 	return fmt.Sprintf("(%v, %v)", pair.First, pair.Second)
 }
 
-func (set *unsafeSet) Pop() interface{} {
-	for item := range *set {
-		delete(*set, item)
-		return item
-	}
-	return nil
-}
-
-func (set *unsafeSet) PowerSet() Set {
-	powSet := NewThreadUnsafeSet()
-	nullset := newThreadUnsafeSet()
-	powSet.Add(&nullset)
-
-	for es := range *set {
-		u := newThreadUnsafeSet()
-		j := powSet.Iter()
-		for er := range j {
-			p := newThreadUnsafeSet()
-			if reflect.TypeOf(er).Name() == "" {
-				k := er.(*unsafeSet)
-				for ek := range *(k) {
-					p.Add(ek)
-				}
-			} else {
-				p.Add(er)
-			}
-			p.Add(es)
-			u.Add(&p)
-		}
-
-		powSet = powSet.Union(&u)
-	}
-
-	return powSet
-}
-
 func (set *unsafeSet) CartesianProduct(other Set) Set {
 	o := other.(*unsafeSet)
 	cartProduct := NewThreadUnsafeSet()
@@ -266,7 +232,7 @@ func (set *unsafeSet) CartesianProduct(other Set) Set {
 }
 
 func (set *unsafeSet) ToSlice() []interface{} {
-	keys := make([]interface{}, 0, set.Cardinality())
+	keys := make([]interface{}, 0, set.Size())
 	for elem := range *set {
 		keys = append(keys, elem)
 	}
@@ -276,7 +242,7 @@ func (set *unsafeSet) ToSlice() []interface{} {
 
 // MarshalJSON creates a JSON array from the set, it marshals all elements
 func (set *unsafeSet) MarshalJSON() ([]byte, error) {
-	items := make([]string, 0, set.Cardinality())
+	items := make([]string, 0, set.Size())
 
 	for elem := range *set {
 		b, err := json.Marshal(elem)

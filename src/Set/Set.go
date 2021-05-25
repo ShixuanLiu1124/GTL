@@ -2,34 +2,54 @@ package Set
 
 type Set interface {
 	Add(i interface{}) bool
-	Cardinality() int
+	Size() int
 	Clear()
 	Clone() Set
-	Contains(i ...interface{}) bool
+	Contains(...interface{}) bool
+
+	// Difference 求s - other差集
 	Difference(other Set) Set
+
+	// Equal 判断两个集合是否相等
 	Equal(other Set) bool
+
+	// Intersect 求该集合s和other的交集
 	Intersect(other Set) Set
-	IsProperSubset(other Set) bool
-	IsProperSuperset(other Set) bool
-	IsSubset(other Set) bool
-	IsSuperset(other Set) bool
-	Each(func(interface{}) bool)
-	Iter() <-chan interface{}
-	Iterator() *iterator
-	Remove(i interface{})
-	String() string
-	SymmetricDifference(other Set) Set
+
+	// Union 求该集合s和other的并集
 	Union(other Set) Set
-	Pop() interface{}
-	PowerSet() Set
+
+	// IsProperSubset 判断other是否是该集合s的真子集
+	IsProperSubset(other Set) bool
+
+	// IsProperSuperset 判断other是否是该集合s的真超集
+	IsProperSuperset(other Set) bool
+
+	// IsSubset 判断other是否是该集合s的子集
+	IsSubset(other Set) bool
+
+	// IsSuperset 判断other是否是该集合s的超集
+	IsSuperset(other Set) bool
+
+	Iter() <-chan interface{}
+
+	// Iterator 返回该集合s的一个迭代器
+	Iterator() *Iterator
+	Remove(i interface{})
+
+	// SymmetricDifference 求该集合s和other的对称差集
+	// 对称差集：只属于其中一个集合，而不属于另一个集合的元素组成的集合。
+	SymmetricDifference(other Set) Set
+
 	CartesianProduct(other Set) Set
 	ToSlice() []interface{}
+	String() string
 }
 
 // NewSet creates and returns a reference to an empty set.  Operations
 // on the resulting set are thread-safe.
 func NewSet(s ...interface{}) Set {
-	set := newThreadSafeSet()
+	set := newSafeSet()
 	for _, item := range s {
 		set.Add(item)
 	}
@@ -52,7 +72,7 @@ func NewSetFromSlice(s []interface{}) Set {
 // NewThreadUnsafeSet creates and returns a reference to an empty set.
 // Operations on the resulting set are not thread-safe.
 func NewThreadUnsafeSet() Set {
-	set := newThreadUnsafeSet()
+	set := newUnsafeSet()
 	return &set
 }
 

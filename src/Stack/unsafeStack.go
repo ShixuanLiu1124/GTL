@@ -38,7 +38,10 @@ func NewUnsafeStack(maxSize int, values ...interface{}) (*unsafeStack, error) {
 	}
 
 	for _, value := range values {
-		s.Push(value)
+		err := s.Push(value)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return s, nil
@@ -82,6 +85,8 @@ func (s *unsafeStack) Pop() (interface{}, error) {
 	return value, nil
 }
 
+/*---------------------------------以下为接口实现---------------------------------------*/
+
 func (s *unsafeStack) SetMaxSize(maxSize int) error {
 	if maxSize != -1 && maxSize < s.size {
 		return errors.New("New maxSize is less than current size.")
@@ -98,8 +103,13 @@ func (s *unsafeStack) CopyFromArray(values []interface{}) error {
 		return errors.New("Not enough free space.")
 	}
 
-	for a := range values {
-		err := s.Push(a)
+	fmt.Println("values =", values)
+
+	for _, value := range values {
+
+		fmt.Println("value =", value)
+
+		err := s.Push(value)
 		if err != nil {
 			return err
 		}
@@ -129,12 +139,6 @@ func (s *unsafeStack) MaxSize() int {
 	return s.maxSize
 }
 
-func (s *unsafeStack) ToString() string {
-	// TODO ToString method
-
-	return ""
-}
-
 func (s *unsafeStack) Clear() bool {
 	s.rail = s.head
 	s.head.prev = nil
@@ -147,7 +151,7 @@ func (s *unsafeStack) Clear() bool {
 
 func (s *unsafeStack) String() string {
 	var b strings.Builder
-	b.WriteString("unsafeQueue{")
+	b.WriteString("unsafeStack{")
 
 	for p := s.head.next; p != nil; p = p.next {
 		if p != s.head.next {
@@ -156,7 +160,17 @@ func (s *unsafeStack) String() string {
 		b.WriteString(fmt.Sprintf("%v", p.value))
 	}
 	b.WriteString("}")
-	fmt.Println(b.String())
 
 	return b.String()
+}
+
+// ToSlice 将切片以切片形式返回
+func (s *unsafeStack) ToSlice() []interface{} {
+	ans := make([]interface{}, s.size)
+
+	for p := s.head.next; p != nil; p = p.next {
+		ans = append(ans, p.value)
+	}
+
+	return ans
 }
