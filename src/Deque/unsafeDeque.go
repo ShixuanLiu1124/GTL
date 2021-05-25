@@ -47,6 +47,34 @@ func NewUnsafeDeque(maxSize int, values ...interface{}) (*unsafeDeque, error) {
 	return q, nil
 }
 
+func NewUnsafeDequeWithSlice(maxSize int, values []interface{}) (*unsafeDeque, error) {
+	if maxSize != -1 && len(values) > maxSize {
+		return nil, errors.New("Length of values is too long.")
+	}
+
+	node := &dQNode{
+		value: nil,
+		next:  nil,
+		prev:  nil,
+	}
+
+	q := &unsafeDeque{
+		size:    0,
+		maxSize: maxSize,
+		head:    node,
+		rail:    node,
+	}
+
+	for _, value := range values {
+		err := q.PushBack(value)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return q, nil
+}
+
 func (q *unsafeDeque) PushFront(value interface{}) error {
 	if q.Fill() {
 		return errors.New("This deque is fill.")
@@ -171,14 +199,12 @@ func (q *unsafeDeque) SetMaxSize(maxSize int) error {
 	return nil
 }
 
-func (q *unsafeDeque) Clear() bool {
+func (q *unsafeDeque) Clear() {
 	q.rail = q.head
 	q.head.prev = nil
 	q.head.next = nil
 	q.head.value = nil
 	q.size = 0
-
-	return true
 }
 
 func (q *unsafeDeque) String() string {

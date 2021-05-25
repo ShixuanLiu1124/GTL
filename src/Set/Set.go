@@ -31,6 +31,7 @@ type Set interface {
 	// IsSuperset 判断other是否是该集合s的超集
 	IsSuperset(other Set) bool
 
+	// Iter 返回一个可以遍历该集合s的通道
 	Iter() <-chan interface{}
 
 	// Iterator 返回该集合s的一个迭代器
@@ -41,13 +42,13 @@ type Set interface {
 	// 对称差集：只属于其中一个集合，而不属于另一个集合的元素组成的集合。
 	SymmetricDifference(other Set) Set
 
+	// CartesianProduct 求该集合s和other的笛卡尔积
 	CartesianProduct(other Set) Set
 	ToSlice() []interface{}
 	String() string
 }
 
-// NewSet creates and returns a reference to an empty set.  Operations
-// on the resulting set are thread-safe.
+// NewSet NewSet创建并返回一个线程安全的空集的引用
 func NewSet(s ...interface{}) Set {
 	set := newSafeSet()
 	for _, item := range s {
@@ -56,8 +57,7 @@ func NewSet(s ...interface{}) Set {
 	return &set
 }
 
-// NewSetWith creates and returns a new set with the given elements.
-// Operations on the resulting set are thread-safe.
+// NewSetWith 依照给定的元素创建一个线程安全的空集的引用
 func NewSetWith(elts ...interface{}) Set {
 	return NewSetFromSlice(elts)
 }

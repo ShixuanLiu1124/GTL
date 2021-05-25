@@ -217,6 +217,7 @@ func (pair OrderedPair) String() string {
 	return fmt.Sprintf("(%v, %v)", pair.First, pair.Second)
 }
 
+// CartesianProduct 求该集合s和other的笛卡尔积
 func (set *unsafeSet) CartesianProduct(other Set) Set {
 	o := other.(*unsafeSet)
 	cartProduct := NewThreadUnsafeSet()

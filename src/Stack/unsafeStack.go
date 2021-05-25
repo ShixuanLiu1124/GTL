@@ -47,6 +47,34 @@ func NewUnsafeStack(maxSize int, values ...interface{}) (*unsafeStack, error) {
 	return s, nil
 }
 
+func NewUnsafeStackWithSlice(maxSize int, values []interface{}) (*unsafeStack, error) {
+	if maxSize != -1 && len(values) > maxSize {
+		return nil, errors.New("Length of values is too long.")
+	}
+
+	node := &sNode{
+		value: nil,
+		next:  nil,
+		prev:  nil,
+	}
+
+	s := &unsafeStack{
+		size:    0,
+		maxSize: maxSize,
+		head:    node,
+		rail:    node,
+	}
+
+	for _, value := range values {
+		err := s.Push(value)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return s, nil
+}
+
 func (s *unsafeStack) Push(value interface{}) error {
 	if s.Fill() {
 		return errors.New("This stack is fill")
@@ -139,14 +167,12 @@ func (s *unsafeStack) MaxSize() int {
 	return s.maxSize
 }
 
-func (s *unsafeStack) Clear() bool {
+func (s *unsafeStack) Clear() {
 	s.rail = s.head
 	s.head.prev = nil
 	s.head.next = nil
 	s.head.value = nil
 	s.size = 0
-
-	return true
 }
 
 func (s *unsafeStack) String() string {
