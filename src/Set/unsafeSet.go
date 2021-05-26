@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// An OrderedPair represents a 2-tuple of values.
+// OrderedPair 表示一个二元组，用于求笛卡尔积
 type OrderedPair struct {
 	First  interface{}
 	Second interface{}
@@ -19,7 +19,7 @@ func newUnsafeSet() unsafeSet {
 	return make(unsafeSet)
 }
 
-// Equal says whether two 2-tuples contain the same values in the same order.
+// Equal 用来判定两个OrderedPair对象是否相等
 func (pair *OrderedPair) Equal(other OrderedPair) bool {
 	if pair.First == other.First &&
 		pair.Second == other.Second {
@@ -29,6 +29,7 @@ func (pair *OrderedPair) Equal(other OrderedPair) bool {
 	return false
 }
 
+// Add 向集合中添加元素
 func (set *unsafeSet) Add(i interface{}) bool {
 	_, found := (*set)[i]
 	if found {

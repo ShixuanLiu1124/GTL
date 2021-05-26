@@ -32,7 +32,7 @@ func UnsafeStackExample() {
 	fmt.Println("s.size =", s.Size())
 	fmt.Println(s.String())
 
-	s.CopyFromArray([]interface{}{'c', "aq", []int{1, 2, 3, 4}, 1})
+	s.CopyFromSlice([]interface{}{'c', "aq", []int{1, 2, 3, 4}, 1})
 	fmt.Println(s.String())
 }
 

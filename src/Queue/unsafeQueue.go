@@ -116,7 +116,7 @@ func (q *unsafeQueue) Pop() (interface{}, error) {
 
 /*---------------------------------以下为接口实现---------------------------------------*/
 
-func (q *unsafeQueue) CopyFromArray(values []interface{}) error {
+func (q *unsafeQueue) CopyFromSlice(values []interface{}) error {
 	l := len(values)
 	if q.maxSize != -1 && q.size+l > q.maxSize {
 		return errors.New("Not enough free space.")

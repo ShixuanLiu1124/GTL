@@ -127,7 +127,7 @@ func (s *unsafeStack) SetMaxSize(maxSize int) error {
 	return nil
 }
 
-func (s *unsafeStack) CopyFromArray(values []interface{}) error {
+func (s *unsafeStack) CopyFromSlice(values []interface{}) error {
 	l := len(values)
 	if s.maxSize != -1 && s.size+l > s.maxSize {
 		return errors.New("Not enough free space.")
