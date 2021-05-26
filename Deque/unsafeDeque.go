@@ -153,7 +153,8 @@ func (q *unsafeDeque) PopBack() (interface{}, error) {
 
 /*---------------------------------以下为接口实现---------------------------------------*/
 
-func (q *unsafeDeque) CopyFromSlice(values []interface{}) error {
+// CatFromSlice 从slice中复制元素到Deque后面
+func (q *unsafeDeque) CatFromSlice(values []interface{}) error {
 	l := len(values)
 	if q.maxSize != -1 && q.size+l > q.maxSize {
 		return errors.New("Not enough free space.")

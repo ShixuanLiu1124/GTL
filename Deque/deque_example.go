@@ -1,13 +1,13 @@
-package Queue
+package Deque
 
 import "fmt"
 
 func UnsafeQueueExample() {
-	q, err := NewUnsafeQueue(-1, 1, 2, 3, 4, 5)
+	q, err := NewUnsafeDeque(-1, 1, 2, 3, 4, 5)
 	if err != nil {
 		fmt.Println(err)
 	}
-	err = q.Push(6)
+	err = q.PushBack(6)
 	if err != nil {
 		return
 	}
@@ -19,7 +19,7 @@ func UnsafeQueueExample() {
 		return
 	}
 	fmt.Println("v1 =", v1)
-	v2, err := q.Pop()
+	v2, err := q.PopBack()
 	if err != nil {
 		fmt.Println(err)
 		return

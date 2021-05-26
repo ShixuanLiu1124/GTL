@@ -10,7 +10,7 @@ type Container interface {
 	String() string
 
 	// CopyFromSlice 从切片中复制元素到容器中
-	CopyFromSlice([]interface{}) error
+	CatFromSlice([]interface{}) error
 
 	// ToSlice 将容器按切片形式返回
 	ToSlice() []interface{}

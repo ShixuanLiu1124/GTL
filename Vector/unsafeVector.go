@@ -89,10 +89,10 @@ func (v *unsafeVector) Find(
 ) int {
 	start := 0
 	end := v.Size()
-	mid := start + (end-start)/2
 	pos := -1
 
 	for start < end {
+		mid := start + (end-start)/2
 		temp, err := v.At(mid)
 		if err != nil {
 			fmt.Println(err)
@@ -160,7 +160,8 @@ func (v *unsafeVector) String() string {
 	return fmt.Sprintf("%v", v.s)
 }
 
-func (v *unsafeVector) CopyFromSlice(values []interface{}) error {
+// CatFromSlice 从slice中复制元素到Vector后面
+func (v *unsafeVector) CatFromSlice(values []interface{}) error {
 	l := len(values)
 	if v.maxSize != -1 && v.Size()+l > v.maxSize {
 		return errors.New("Not enough free space.")
