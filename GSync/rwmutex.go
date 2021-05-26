@@ -2,6 +2,7 @@ package GSync
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"sync/atomic"
 
@@ -14,31 +15,6 @@ type RWLocker interface {
 	WLock()
 	WUnlock()
 }
-
-type DummyRWLock struct{}
-
-func (*DummyRWLock) RLock()   {}
-func (*DummyRWLock) RUnlock() {}
-func (*DummyRWLock) WLock()   {}
-func (*DummyRWLock) WUnlock() {}
-
-type MutexAsRWLock struct {
-	m sync.Mutex
-}
-
-func (l *MutexAsRWLock) RLock()   { l.m.Lock() }
-func (l *MutexAsRWLock) RUnlock() { l.m.Unlock() }
-func (l *MutexAsRWLock) WLock()   { l.m.Lock() }
-func (l *MutexAsRWLock) WUnlock() { l.m.Unlock() }
-
-type RWMutexAsRWLock struct {
-	rwm sync.RWMutex
-}
-
-func (l *RWMutexAsRWLock) RLock()   { l.rwm.RLock() }
-func (l *RWMutexAsRWLock) RUnlock() { l.rwm.RUnlock() }
-func (l *RWMutexAsRWLock) WLock()   { l.rwm.Lock() }
-func (l *RWMutexAsRWLock) WUnlock() { l.rwm.Unlock() }
 
 // ReaderCountRWLock 最基础的读写锁
 // 缺点是当读者持有锁时，写者获取锁的实现会持续自旋，
@@ -84,12 +60,13 @@ func (l *ReaderCountRWLock) WUnlock() {
 	l.m.Unlock()
 }
 
+// ReaderCountCondRWLock 使用条件变量sync.Cond避免自旋操作，实现高效等待
 type ReaderCountCondRWLock struct {
 	readerCount int
 	c           *sync.Cond
 }
 
-// NewReaderCountCondRWLock creates a new ReaderCountRWLock.
+// NewReaderCountCondRWLock 返回一个新的ReaderCountRWLock指针
 func NewReaderCountCondRWLock() *ReaderCountCondRWLock {
 	return &ReaderCountCondRWLock{0, sync.NewCond(new(sync.Mutex))}
 }
@@ -105,7 +82,7 @@ func (l *ReaderCountCondRWLock) RUnlock() {
 	l.readerCount--
 	if l.readerCount < 0 {
 		panic("readerCount negative")
-	} else if l.readerCount == 0 {
+	} else if l.readerCount == 0 { // 没有读者时，在条件变量上发出信号以唤起一个等待线程
 		l.c.Signal()
 	}
 	l.c.L.Unlock()
@@ -113,29 +90,42 @@ func (l *ReaderCountCondRWLock) RUnlock() {
 
 func (l *ReaderCountCondRWLock) WLock() {
 	l.c.L.Lock()
+	// 还有读者时
 	for l.readerCount > 0 {
+		// Wait过程仍然处于循环中，因为极有可能在读者发出信号之后、写者获取锁之前，另一个读者先拿到锁。
 		l.c.Wait()
 	}
 }
 
 func (l *ReaderCountCondRWLock) WUnlock() {
+	// 唤醒一个等待的线程
 	l.c.Signal()
+	// 写者释放锁
 	l.c.L.Unlock()
 }
 
-const maxWeight int64 = 1 << 30
-
+// SemaRWLock 使用golang.org/x/sync/semaphore包实现
+// 使用带权重的信号量类型semaphore.Weighted
 type SemaRWLock struct {
 	s *semaphore.Weighted
 }
 
-// NewSemaRWLock creates a new SemaRWLock.
+// 设定最大权重maxWeight
+const maxWeight int64 = 1 << 30
+
+// NewSemaRWLock 返回一个新的SemaRWLock指针
 func NewSemaRWLock() *SemaRWLock {
 	return &SemaRWLock{semaphore.NewWeighted(maxWeight)}
 }
 
 func (l *SemaRWLock) RLock() {
-	l.s.Acquire(context.Background(), 1)
+	// 阻塞的获取指定权重的资源
+	// 因为可以同时有多个读者线程进行读操作，所以每个读者线程就获取1权重的资源
+	err := l.s.Acquire(context.Background(), 1)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
 
 func (l *SemaRWLock) RUnlock() {
@@ -143,29 +133,49 @@ func (l *SemaRWLock) RUnlock() {
 }
 
 func (l *SemaRWLock) WLock() {
-	l.s.Acquire(context.Background(), maxWeight)
+	// 因为同一时刻只能有一个写者线程进行写操作，所以每个写者线程获取maxWeight权重的资源
+	err := l.s.Acquire(context.Background(), maxWeight)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
 
 func (l *SemaRWLock) WUnlock() {
 	l.s.Release(maxWeight)
 }
 
+/*
+上述的三种实现都存在一个问题：当读者数量很大时，可能会导致写者饥饿。
+例如，第一版实现中 readerCount 为0时，写者才能够获取锁，
+假设有两个活跃的读者以及一个等待的写者，在写者等待一个读者释放锁的过程中，另一个读者可能又会获取锁
+*/
+
+// WritePreferRWLock 写者优先锁
 type WritePreferRWLock struct {
 	readerCount int
-	hasWriter   bool
-	c           *sync.Cond
+
+	// hasWriter 当有写者等待获取锁的时候，值为true
+	hasWriter bool
+	c         *sync.Cond
 }
 
+// NewWritePreferRWLock 返回一个新的WritePreferRWLock指针
 func NewWritePreferRWLock() *WritePreferRWLock {
 	return &WritePreferRWLock{0, false, sync.NewCond(new(sync.Mutex))}
 }
 
 func (l *WritePreferRWLock) RLock() {
+	// 读者获取锁
 	l.c.L.Lock()
 
+	// 检查是否有写者等待获取锁
+	// 如果有的话将会让出获取锁的权限，保证写者先获取锁。
 	for l.hasWriter {
 		l.c.Wait()
 	}
+
+	// 读者自己获取锁
 	l.readerCount++
 	l.c.L.Unlock()
 }
@@ -174,11 +184,13 @@ func (l *WritePreferRWLock) RUnlock() {
 	l.c.L.Lock()
 	l.readerCount--
 	if l.readerCount == 0 {
+		// 唤醒所有线程，加速让写者获得锁
 		l.c.Broadcast()
 	}
 	l.c.L.Unlock()
 }
 
+// WLock 写者在WLock与WUnlock之间不再持有mutex，取而代之，mutex仅用于控制共享结构的访问
 func (l *WritePreferRWLock) WLock() {
 	l.c.L.Lock()
 
@@ -189,24 +201,31 @@ func (l *WritePreferRWLock) WLock() {
 	for l.readerCount > 0 {
 		l.c.Wait()
 	}
+
+	// 因为有hasWriter变量为true保证其他线程都被阻塞，所以此时可以释放锁
 	l.c.L.Unlock()
 }
 
 func (l *WritePreferRWLock) WUnlock() {
 	l.c.L.Lock()
 	l.hasWriter = false
+
+	// 使用Broadcast而不是Signal是因为可能存在多个读者等待，而我们期望唤醒所有等待的读者。
 	l.c.Broadcast()
 	l.c.L.Unlock()
 }
 
+// WritePreferFastRWLock 模仿Go语言自身RWMutex实现更高效的读写锁
 type WritePreferFastRWLock struct {
 	w sync.Mutex
 
 	writerWait chan struct{}
 	readerWait chan struct{}
 
+	// numPending 尝试持有锁或已经持有锁的读者数量
 	numPending int32
 
+	// readersDeparting 在写者持有锁之前获取锁的读者数量（读者释放锁，也会随之减1）
 	readersDeparting int32
 }
 
