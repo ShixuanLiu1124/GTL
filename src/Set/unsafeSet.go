@@ -241,7 +241,7 @@ func (set *unsafeSet) ToSlice() []interface{} {
 	return keys
 }
 
-// MarshalJSON creates a JSON array from the set, it marshals all elements
+// MarshalJSON 将集合中的所有元素以Json数组的形式返回
 func (set *unsafeSet) MarshalJSON() ([]byte, error) {
 	items := make([]string, 0, set.Size())
 
@@ -257,8 +257,7 @@ func (set *unsafeSet) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("[%s]", strings.Join(items, ","))), nil
 }
 
-// UnmarshalJSON recreates a set from a JSON array, it only decodes
-// primitive types. Numbers are decoded as json.Number.
+// UnmarshalJSON 从给定的Json数组中解析出一个集合,数字将被解析为json.Number
 func (set *unsafeSet) UnmarshalJSON(b []byte) error {
 	var i []interface{}
 

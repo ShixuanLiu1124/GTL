@@ -1,8 +1,11 @@
 package Vector
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type unsafeVector struct {
@@ -36,6 +39,7 @@ func NewUnsafeVectorWithSlice(maxSize int, values []interface{}) (*unsafeVector,
 	return v, nil
 }
 
+// PushBack 从vector后方加入元素
 func (v *unsafeVector) PushBack(value interface{}) error {
 	if v.Fill() {
 		return errors.New("This queue is fill.")
@@ -58,6 +62,7 @@ func (v *unsafeVector) PopBack() (interface{}, error) {
 	return value, nil
 }
 
+// At 返回位于index处的元素
 func (v *unsafeVector) At(index int) (interface{}, error) {
 	if v.Size() < index+1 {
 		return nil, errors.New("Index out of bounds")
@@ -75,6 +80,36 @@ func (v *unsafeVector) Remove(start, end int) error {
 	v.s = append(v.s[:start], v.s[end:]...)
 
 	return nil
+}
+
+// Find 使用二分查找技术查找元素下标，less是比较函数，用于比较value1是否小于value2
+func (v *unsafeVector) Find(
+	value interface{},
+	less func(interface{}, interface{}) bool,
+) int {
+	start := 0
+	end := v.Size()
+	mid := start + (end-start)/2
+	pos := -1
+
+	for start < end {
+		temp, err := v.At(mid)
+		if err != nil {
+			fmt.Println(err)
+			return -1
+		}
+
+		if temp == value {
+			pos = mid
+			break
+		} else if less(temp, value) {
+			start = mid + 1
+		} else {
+			end = mid
+		}
+	}
+
+	return pos
 }
 
 /*---------------------------------以下为接口实现---------------------------------------*/
@@ -112,12 +147,13 @@ func (v *unsafeVector) SetMaxSize(maxSize int) error {
 }
 
 func (v *unsafeVector) Clear() {
-	// TODO: 设定阈值
-	// 小于阈值时，使用nil赋值
-	v.s = nil
-
-	// 大于阈值时，使用引用赋值
-	v.s = v.s[:0]
+	if v.Size() <= 102400 {
+		// 小于阈值时，使用nil清空
+		v.s = nil
+	} else {
+		// 大于阈值时，使用切片方式清空，防止频繁分配内存
+		v.s = v.s[:0]
+	}
 }
 
 func (v *unsafeVector) String() string {
@@ -142,4 +178,47 @@ func (v *unsafeVector) CopyFromArray(values []interface{}) error {
 
 func (v *unsafeVector) ToSlice() []interface{} {
 	return v.s
+}
+
+// MarshalJSON 将Vector中的所有元素以Json数组的形式返回
+func (v *unsafeVector) MarshalJSON() ([]byte, error) {
+	items := make([]string, 0, v.Size())
+
+	for elem := range v.s {
+		b, err := json.Marshal(elem)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, string(b))
+	}
+
+	return []byte(fmt.Sprintf("[%s]", strings.Join(items, ","))), nil
+}
+
+// UnmarshalJSON 从给定的Json数组中解析出一个Vector,数字将被解析为json.Number
+func (v *unsafeVector) UnmarshalJSON(b []byte) error {
+	var i []interface{}
+
+	d := json.NewDecoder(bytes.NewReader(b))
+	d.UseNumber()
+	err := d.Decode(&i)
+	if err != nil {
+		return err
+	}
+
+	for _, value := range i {
+		switch t := value.(type) {
+		case []interface{}, map[string]interface{}:
+			continue
+		default:
+			err = v.PushBack(t)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+		}
+	}
+
+	return nil
 }

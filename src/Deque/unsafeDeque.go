@@ -1,6 +1,8 @@
 package Deque
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -231,4 +233,47 @@ func (q *unsafeDeque) ToSlice() []interface{} {
 	}
 
 	return ans
+}
+
+// MarshalJSON 将Deque中的所有元素以Json数组的形式返回
+func (q *unsafeDeque) MarshalJSON() ([]byte, error) {
+	items := make([]string, 0, q.Size())
+
+	for p := q.head.next; p != nil; p = p.next {
+		b, err := json.Marshal(p.value)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, string(b))
+	}
+
+	return []byte(fmt.Sprintf("[%s]", strings.Join(items, ","))), nil
+}
+
+// UnmarshalJSON 从给定的Json数组中解析出一个Deque,数字将被解析为json.Number
+func (q *unsafeDeque) UnmarshalJSON(b []byte) error {
+	var i []interface{}
+
+	d := json.NewDecoder(bytes.NewReader(b))
+	d.UseNumber()
+	err := d.Decode(&i)
+	if err != nil {
+		return err
+	}
+
+	for _, value := range i {
+		switch t := value.(type) {
+		case []interface{}, map[string]interface{}:
+			continue
+		default:
+			err = q.PushBack(t)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+		}
+	}
+
+	return nil
 }

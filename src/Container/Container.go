@@ -10,4 +10,6 @@ type Container interface {
 	String() string
 	CopyFromArray([]interface{}) error
 	ToSlice() []interface{}
+	MarshalJSON() ([]byte, error)
+	UnmarshalJSON(b []byte) error
 }
