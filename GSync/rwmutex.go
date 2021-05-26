@@ -222,7 +222,8 @@ type WritePreferFastRWLock struct {
 	writerWait chan struct{}
 	readerWait chan struct{}
 
-	// numPending 尝试持有锁或已经持有锁的读者数量
+	// numPending 已经持有锁的读者数量
+	// 写者将该字段减去maxReaders，如果得到一个负数就表明一个写者正在使用锁，
 	numPending int32
 
 	// readersDeparting 在写者持有锁之前获取锁的读者数量（读者释放锁，也会随之减1）
@@ -239,12 +240,19 @@ func NewWritePreferFastRWLock() *WritePreferFastRWLock {
 }
 
 func (l *WritePreferFastRWLock) RLock() {
+
+	// 通过原子操作atomic包中的操作访问该字段，因此不再需要锁
+	// 如果numPending是非负数，表明没有写者等待持有锁或正持有锁，因此读者可以继续操作
+	// 如果numPending是负数，表明写者正在等待获取锁或已经获取锁，因此读者将会让出权限，保持等待
 	if atomic.AddInt32(&l.numPending, 1) < 0 {
+		// 保持等待是通过在一个无缓冲channel上等待实现的。
 		<-l.readerWait
 	}
 }
 
 func (l *WritePreferFastRWLock) RUnlock() {
+
+	// 读者释放锁时，将numPending减1
 	if r := atomic.AddInt32(&l.numPending, -1); r < 0 {
 		if r+1 == 0 || r+1 == -maxReaders {
 			panic("RUnlock of unlocked RWLock")
