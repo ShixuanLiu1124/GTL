@@ -31,9 +31,15 @@ func NewUnsafeVectorWithSlice(maxSize int, values []interface{}) (*unsafeVector,
 		return nil, errors.New("Length of values is too long.")
 	}
 
+	// TODO 更改构造函数
+
 	v := &unsafeVector{
-		s:       values,
+		s:       []interface{}{},
 		maxSize: maxSize,
+	}
+
+	for _, value := range values {
+		v.s = append(v.s, value)
 	}
 
 	return v, nil

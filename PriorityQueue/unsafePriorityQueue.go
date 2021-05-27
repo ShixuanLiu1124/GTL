@@ -14,6 +14,38 @@ type unsafePriorityQueue struct {
 	less    func(interface{}, interface{}) bool
 }
 
+func NewUnsafePriorityQueue(maxSize int, values ...interface{}) (*unsafePriorityQueue, error) {
+	if maxSize != -1 && len(values) > maxSize {
+		return nil, errors.New("Length of values is too long.")
+	}
+
+	q := &unsafePriorityQueue{
+		maxSize: maxSize,
+		s:       values,
+		less:    nil,
+	}
+
+	return q, nil
+}
+
+func NewUnsafePriorityQueueWithSlice(maxSize int, values []interface{}) (*unsafePriorityQueue, error) {
+	if maxSize != -1 && len(values) > maxSize {
+		return nil, errors.New("Length of values is too long.")
+	}
+
+	q := &unsafePriorityQueue{
+		maxSize: maxSize,
+		s:       []interface{}{},
+		less:    nil,
+	}
+
+	for _, value := range values {
+		q.s = append(q.s, value)
+	}
+
+	return q, nil
+}
+
 func (q *unsafePriorityQueue) Push(value interface{}) error {
 	if q.Fill() {
 		return errors.New("This queue is fill.")
@@ -50,6 +82,10 @@ func (q *unsafePriorityQueue) Fix(index int) {
 	// TODO 完成对堆的调整
 }
 
+func (q *unsafePriorityQueue) SetFunc(less func(interface{}, interface{}) bool) {
+	q.less = less
+}
+
 func (q *unsafePriorityQueue) Fill() bool {
 	f := false
 	if q.maxSize != -1 {
@@ -79,10 +115,6 @@ func (q *unsafePriorityQueue) SetMaxSize(maxSize int) error {
 	q.maxSize = maxSize
 
 	return nil
-}
-
-func (q *unsafePriorityQueue) SetFunc(less func(interface{}, interface{}) bool) {
-	q.less = less
 }
 
 func (q *unsafePriorityQueue) Clear() {
