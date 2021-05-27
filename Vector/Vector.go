@@ -1,6 +1,10 @@
 package Vector
 
+import "GTL/Container"
+
 type Vector interface {
+	Container.Container
+
 	PushBack(value interface{}) error
 
 	PopBack() (interface{}, error)

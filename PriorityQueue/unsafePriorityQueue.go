@@ -1,3 +1,7 @@
 package PriorityQueue
 
-type unsafePriorityQueue struct{}
+import "container/heap"
+
+type unsafePriorityQueue struct {
+	heap.Interface
+}
