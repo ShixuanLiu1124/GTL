@@ -2,11 +2,17 @@ package Container
 
 type Container interface {
 	Fill() bool
+
 	Empty() bool
+
 	Size() int
+
 	MaxSize() int
+
 	SetMaxSize(int) error
+
 	Clear()
+
 	String() string
 
 	// CatFromSlice 从切片中复制元素到容器中
