@@ -144,7 +144,7 @@ func (q *unsafeQueue) Fill() bool {
 }
 
 func (q *unsafeQueue) Empty() bool {
-	return q.size == 0
+	return q.Size() == 0
 }
 
 func (q *unsafeQueue) Size() int {

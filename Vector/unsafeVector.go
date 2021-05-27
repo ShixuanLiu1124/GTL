@@ -158,13 +158,7 @@ func (v *unsafeVector) SetMaxSize(maxSize int) error {
 }
 
 func (v *unsafeVector) Clear() {
-	if v.Size() <= 102400 {
-		// 小于阈值时，使用nil清空
-		v.s = nil
-	} else {
-		// 大于阈值时，使用切片方式清空，防止频繁分配内存
-		v.s = v.s[:0]
-	}
+	v.s = nil
 }
 
 func (v *unsafeVector) String() string {
@@ -189,7 +183,11 @@ func (v *unsafeVector) CatFromSlice(values []interface{}) error {
 }
 
 func (v *unsafeVector) ToSlice() []interface{} {
-	return v.s
+	// 切片直接指向存储空间，所以要复制到临时变量中再返回
+	b := make([]interface{}, len(v.s))
+	copy(b, v.s)
+
+	return b
 }
 
 // MarshalJSON 将Vector中的所有元素以Json数组的形式返回
