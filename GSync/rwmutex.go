@@ -17,8 +17,8 @@ type RWLocker interface {
 }
 
 // ReaderCountRWLock 最基础的读写锁
-// 缺点是当读者持有锁时，写者获取锁的实现会持续自旋，
-// 不断的获取锁与释放锁这一过程对CPU的计算能力来说是一种额外的消耗。
+// 缺点是当读者持有锁时，写者获取锁的实现会持续自旋
+// 不断的获取锁与释放锁这一过程对CPU的计算能力来说是一种额外的消耗
 type ReaderCountRWLock struct {
 	// m 互斥锁
 	m sync.Mutex

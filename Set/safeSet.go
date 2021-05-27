@@ -66,6 +66,7 @@ func (set *safeSet) Union(other Set) Set {
 	ret := &safeSet{s: *unsafeUnion}
 	set.RUnlock()
 	o.RUnlock()
+
 	return ret
 }
 
@@ -105,6 +106,7 @@ func (set *safeSet) SymmetricDifference(other Set) Set {
 	ret := &safeSet{s: *unsafeDifference}
 	set.RUnlock()
 	o.RUnlock()
+
 	return ret
 }
 

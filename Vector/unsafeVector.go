@@ -62,6 +62,17 @@ func (v *unsafeVector) PopBack() (interface{}, error) {
 	return value, nil
 }
 
+func (v *unsafeVector) Set(index, value int) error {
+	b, err := v.At(index)
+	if err != nil {
+		return err
+	}
+	if b != value {
+		v.s[index] = value
+	}
+	return nil
+}
+
 // At 返回位于index处的元素
 func (v *unsafeVector) At(index int) (interface{}, error) {
 	if v.Size() < index+1 {
