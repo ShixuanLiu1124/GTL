@@ -46,11 +46,11 @@ func (q *safePriorityQueue) Top() (interface{}, error) {
 	return q.Top()
 }
 
-func (q *safePriorityQueue) Fix(index int) {
+func (q *safePriorityQueue) fix(index int) {
 	q.m.Lock()
 	defer q.m.Unlock()
 
-	q.uq.Fix(index)
+	q.uq.fix(index)
 }
 
 func (q *safePriorityQueue) SetFunc(less func(interface{}, interface{}) bool) {

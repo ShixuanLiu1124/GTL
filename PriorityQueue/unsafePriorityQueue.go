@@ -11,7 +11,7 @@ import (
 type unsafePriorityQueue struct {
 	maxSize int
 	s       []interface{}
-	less    func(interface{}, interface{}) bool
+	less    func(i, j interface{}) bool
 }
 
 func NewUnsafePriorityQueue(maxSize int, values ...interface{}) (*unsafePriorityQueue, error) {
@@ -24,6 +24,7 @@ func NewUnsafePriorityQueue(maxSize int, values ...interface{}) (*unsafePriority
 		s:       values,
 		less:    nil,
 	}
+	q.fix(0)
 
 	return q, nil
 }
@@ -42,8 +43,57 @@ func NewUnsafePriorityQueueWithSlice(maxSize int, values []interface{}) (*unsafe
 	for _, value := range values {
 		q.s = append(q.s, value)
 	}
+	q.fix(0)
 
 	return q, nil
+}
+
+func (q *unsafePriorityQueue) swap(i, j int) {
+	q.s[i], q.s[j] = q.s[j], q.s[i]
+}
+
+// up 将元素向上调整
+func (q *unsafePriorityQueue) up(index int) {
+	for {
+		// i是该元素的父亲结点
+		i := (index - 1) / 2
+		if i == index || !q.less(index, i) {
+			break
+		}
+		q.swap(i, index)
+		index = i
+	}
+}
+
+// down 将元素向下调整
+func (q *unsafePriorityQueue) down(start, end int) bool {
+	i := start
+	for {
+		j1 := 2*i + 1
+		// j1 < 0 after int overflow
+		if j1 >= end || j1 < 0 {
+			break
+		}
+		// 获取左孩子
+		j := j1
+		if j2 := j1 + 1; j2 < end && q.less(j2, j1) {
+			// 获取右孩子
+			j = j2 // = 2*i + 2
+		}
+		if !q.less(j, i) {
+			break
+		}
+		q.swap(i, j)
+		i = j
+	}
+	return i > start
+}
+
+// fix 调整堆
+func (q *unsafePriorityQueue) fix(index int) {
+	if !q.down(index, q.Size()) {
+		q.up(index)
+	}
 }
 
 func (q *unsafePriorityQueue) Push(value interface{}) error {
@@ -52,7 +102,7 @@ func (q *unsafePriorityQueue) Push(value interface{}) error {
 	}
 
 	q.s = append(q.s, value)
-	q.Fix(0)
+	q.up(q.Size() - 1)
 
 	return nil
 }
@@ -63,9 +113,11 @@ func (q *unsafePriorityQueue) Pop() (interface{}, error) {
 	}
 
 	value := q.s[len(q.s)-1]
-	q.s = q.s[:len(q.s)-1]
+	n := q.Size() - 1
+	q.swap(0, n)
+	q.s = q.s[:q.Size()-1]
 
-	q.Fix(0)
+	q.down(0, n)
 
 	return value, nil
 }
@@ -78,12 +130,9 @@ func (q *unsafePriorityQueue) Top() (interface{}, error) {
 	return q.s[0], nil
 }
 
-func (q *unsafePriorityQueue) Fix(index int) {
-	// TODO 完成对堆的调整
-}
-
 func (q *unsafePriorityQueue) SetFunc(less func(interface{}, interface{}) bool) {
 	q.less = less
+	q.fix(0)
 }
 
 func (q *unsafePriorityQueue) Fill() bool {
@@ -138,7 +187,7 @@ func (q *unsafePriorityQueue) CatFromSlice(values []interface{}) error {
 		}
 	}
 
-	q.Fix(0)
+	q.fix(0)
 
 	return nil
 }
@@ -189,7 +238,7 @@ func (q *unsafePriorityQueue) UnmarshalJSON(b []byte) error {
 		}
 	}
 
-	q.Fix(0)
+	q.fix(0)
 
 	return nil
 }
