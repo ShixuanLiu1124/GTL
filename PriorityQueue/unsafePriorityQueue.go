@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// unsafePriorityQueue 实现了一个小顶堆(根据less函数而定)
 type unsafePriorityQueue struct {
 	maxSize int
 	s       []interface{}
@@ -107,6 +108,7 @@ func (q *unsafePriorityQueue) Push(value interface{}) error {
 	return nil
 }
 
+// Pop 删除并返回最小元素（根据less函数）
 func (q *unsafePriorityQueue) Pop() (interface{}, error) {
 	if q.Empty() {
 		return nil, errors.New("This queue is empty")
