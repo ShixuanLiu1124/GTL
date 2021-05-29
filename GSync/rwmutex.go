@@ -251,7 +251,6 @@ func NewWritePreferFastRWLock() *WritePreferFastRWLock {
 }
 
 func (l *WritePreferFastRWLock) RLock() {
-
 	// 通过原子操作atomic包中的操作访问该字段，因此不再需要锁
 	// 如果numPending是非负数，表明没有写者等待持有锁或正持有锁，因此读者可以继续操作
 	// 如果numPending是负数，表明写者正在等待获取锁或已经获取锁，因此读者将会让出权限，保持等待
@@ -262,13 +261,17 @@ func (l *WritePreferFastRWLock) RLock() {
 }
 
 func (l *WritePreferFastRWLock) RUnlock() {
-
 	// 读者释放锁时，将numPending减1
 	if r := atomic.AddInt32(&l.numPending, -1); r < 0 {
+		// unlock情况下的numPending应该是等于0的，此时再对numPending进行减1的话就会让它变为-1，这是非法情况
+		// 或者是在写者已经占用临界区的时候调用RUnlock会导致numPending = -maxReaders - 1，这也是非法情况
 		if r+1 == 0 || r+1 == -maxReaders {
 			panic("RUnlock of unlocked RWLock")
 		}
+
+		// 如果等于0说明已经没有读者在临界区
 		if atomic.AddInt32(&l.readersDeparting, -1) == 0 {
+			// 放入空结构体唤醒写者线程
 			l.writerWait <- struct{}{}
 		}
 	}
@@ -276,17 +279,23 @@ func (l *WritePreferFastRWLock) RUnlock() {
 
 func (l *WritePreferFastRWLock) WLock() {
 	l.w.Lock()
+	// 通过执行numPending减maxReaders操作来告知读者有一个写者在申请临界区
 	r := atomic.AddInt32(&l.numPending, -maxReaders) + maxReaders
+
+	// r!=0表示有读者在临界区内，此时将r加到readersDeparting中，让读者知道有多少个尝试持有锁或持有锁的读者
 	if r != 0 && atomic.AddInt32(&l.readersDeparting, r) != 0 {
 		<-l.writerWait
 	}
 }
 
 func (l *WritePreferFastRWLock) WUnlock() {
+	// 告知读者，写者已经占用完了临界区
 	r := atomic.AddInt32(&l.numPending, maxReaders)
+	// 如果本来就没有写锁，便报出panic
 	if r >= maxReaders {
 		panic("WUnlock of unlocked RWLock")
 	}
+	// 通知所有读者（数量为r），写者已经占用完了临界区
 	for i := 0; i < int(r); i++ {
 		l.readerWait <- struct{}{}
 	}

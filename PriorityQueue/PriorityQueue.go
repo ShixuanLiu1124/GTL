@@ -11,9 +11,15 @@ type PriorityQueue interface {
 
 	Top() (interface{}, error)
 
-	Fix()
+	swap(int, int)
 
-	SetFunc(func(i, j int) bool)
+	up(int)
+
+	down(int, int) bool
+
+	fix(int)
+
+	SetFunc(func(interface{}, interface{}) bool)
 
 	Container.Container
 }
