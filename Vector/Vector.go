@@ -3,20 +3,17 @@ package Vector
 import "GTL/Container"
 
 type Vector interface {
-	Container.Container
-
-	PushBack(value interface{}) error
+	PushBack(interface{}) error
 
 	PopBack() (interface{}, error)
 
-	Set(index, value int) error
+	Set(int, int) error
 
-	At(index int) (interface{}, error)
+	At(int) (interface{}, error)
 
-	Remove(start, end int) error
+	Remove(int, int) error
 
-	Find(
-		value interface{},
-		less func(interface{}, interface{}) bool,
-	) int
+	Find(interface{}, func(interface{}, interface{}) bool) int
+
+	Container.Container
 }
