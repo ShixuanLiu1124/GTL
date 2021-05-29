@@ -10,9 +10,16 @@ import (
 )
 
 type RWLocker interface {
+	// RLock 读者读数据时获取读锁
 	RLock()
+
+	// RUnlock 读者读完数据时释放读锁
 	RUnlock()
+
+	// WLock 写者写数据时获取写锁
 	WLock()
+
+	// WUnlock 写者写完数据时释放写锁
 	WUnlock()
 }
 
@@ -21,7 +28,8 @@ type RWLocker interface {
 // 不断的获取锁与释放锁这一过程对CPU的计算能力来说是一种额外的消耗
 type ReaderCountRWLock struct {
 	// m 互斥锁
-	m sync.Mutex
+	m *sync.Mutex
+
 	// readerCount 记录读者数量
 	readerCount int
 }
@@ -30,8 +38,10 @@ type ReaderCountRWLock struct {
 func (l *ReaderCountRWLock) RLock() {
 	// 读的时候给readerCount上锁
 	l.m.Lock()
+
 	// 读者数量加一
 	l.readerCount++
+
 	// 给readerCount解锁
 	l.m.Unlock()
 }
@@ -100,6 +110,7 @@ func (l *ReaderCountCondRWLock) WLock() {
 func (l *ReaderCountCondRWLock) WUnlock() {
 	// 唤醒一个等待的线程
 	l.c.Signal()
+
 	// 写者释放锁
 	l.c.L.Unlock()
 }
