@@ -9,14 +9,14 @@ type Container interface {
 
 	MaxSize() int
 
-	SetMaxSize(int) error
+	SetMaxSize(maxSize int) error
 
 	Clear()
 
 	String() string
 
 	// CatFromSlice 从切片中复制元素到容器中
-	CatFromSlice([]interface{}) error
+	CatFromSlice(values []interface{}) error
 
 	// ToSlice 将容器按切片形式返回
 	ToSlice() []interface{}

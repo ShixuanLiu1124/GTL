@@ -5,21 +5,21 @@ import (
 )
 
 type PriorityQueue interface {
-	Push(interface{}) error
+	Push(values interface{}) error
 
 	Pop() (interface{}, error)
 
 	Top() (interface{}, error)
 
-	swap(int, int)
+	swap(i, j int)
 
-	up(int)
+	up(index int)
 
-	down(int, int) bool
+	down(start int, end int) bool
 
-	fix(int)
+	fix(index int)
 
-	SetFunc(func(interface{}, interface{}) bool)
+	SetFunc(less func(interface{}, interface{}) bool)
 
 	Container.Container
 }

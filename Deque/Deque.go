@@ -5,9 +5,9 @@ import "GTL/Container"
 type Deque interface {
 	Container.Container
 
-	PushFront(value interface{}) error
+	PushFront(values interface{}) error
 
-	PushBack(value interface{}) error
+	PushBack(values interface{}) error
 
 	Front() (interface{}, error)
 
