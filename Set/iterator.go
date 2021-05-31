@@ -8,10 +8,9 @@ type Iterator struct {
 	stop chan struct{}
 }
 
-// Stop 用于停止iterator的迭代操作， no further elements will be received on C, C will be closed.
+// Stop 用于停止iterator的迭代操作，当C不再接收元素时，C会被关闭
 func (i *Iterator) Stop() {
-	// Allows for Stop() to be called multiple times
-	// (close() panics when called on already closed channel)
+	// Stop能被多次调用
 	defer func() {
 		recover()
 	}()

@@ -9,12 +9,16 @@ type YourType struct {
 }
 
 func ExampleIterator() {
-	set := NewSetFromSlice([]interface{}{
+	set, err := NewSafeSetWithSlice(-1, []interface{}{
 		&YourType{Name: "Alise"},
 		&YourType{Name: "Bob"},
 		&YourType{Name: "John"},
 		&YourType{Name: "Nick"},
 	})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	it := set.Iterator()
 

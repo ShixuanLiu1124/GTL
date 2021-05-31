@@ -46,7 +46,7 @@ func NewUnsafeVectorWithSlice(maxSize int, values []interface{}) (*unsafeVector,
 // PushBack 从vector后方加入元素
 func (v *unsafeVector) PushBack(value interface{}) error {
 	if v.Fill() {
-		return errors.New("This queue is fill.")
+		return errors.New("This vector is fill.")
 	}
 
 	v.s = append(v.s, value)
@@ -57,7 +57,7 @@ func (v *unsafeVector) PushBack(value interface{}) error {
 // PopBack 弹出最后一个元素
 func (v *unsafeVector) PopBack() (interface{}, error) {
 	if v.Empty() {
-		return nil, errors.New("This Vector is empty.")
+		return nil, errors.New("This vector is empty.")
 	}
 
 	value := v.s[len(v.s)-1]

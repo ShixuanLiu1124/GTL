@@ -3,6 +3,7 @@ package Set
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -13,10 +14,51 @@ type OrderedPair struct {
 	Second interface{}
 }
 
-type unsafeSet map[interface{}]struct{}
+type unsafeSet struct {
+	m       map[interface{}]struct{}
+	maxSize int
+}
 
-func newUnsafeSet() unsafeSet {
-	return make(unsafeSet)
+func NewUnsafeSet(maxSize int, values ...interface{}) (*unsafeSet, error) {
+	if maxSize != -1 && len(values) > maxSize {
+		return nil, errors.New("Length of values is too long.")
+	}
+
+	var mm map[interface{}]struct{}
+	if maxSize != -1 {
+		mm = make(map[interface{}]struct{}, maxSize)
+	} else {
+		mm = make(map[interface{}]struct{})
+	}
+	for _, v := range values {
+		mm[v] = struct{}{}
+	}
+
+	return &unsafeSet{
+		m:       mm,
+		maxSize: maxSize,
+	}, nil
+}
+
+func NewUnsafeSetWithSlice(maxSize int, values []interface{}) (*unsafeSet, error) {
+	if maxSize != -1 && len(values) > maxSize {
+		return nil, errors.New("Length of values is too long.")
+	}
+
+	var mm map[interface{}]struct{}
+	if maxSize != -1 {
+		mm = make(map[interface{}]struct{}, maxSize)
+	} else {
+		mm = make(map[interface{}]struct{})
+	}
+	for _, v := range values {
+		mm[v] = struct{}{}
+	}
+
+	return &unsafeSet{
+		m:       mm,
+		maxSize: maxSize,
+	}, nil
 }
 
 // Equal 用来判定两个OrderedPair对象是否相等
@@ -29,20 +71,20 @@ func (pair *OrderedPair) Equal(other OrderedPair) bool {
 	return false
 }
 
-// Add 向集合中添加元素
-func (set *unsafeSet) Add(i interface{}) bool {
-	_, found := (*set)[i]
-	if found {
-		return false //False if it existed already
+// Insert 向集合中添加元素
+func (s *unsafeSet) Insert(i interface{}) error {
+	if s.Fill() {
+		return errors.New("This set is fill.")
 	}
 
-	(*set)[i] = struct{}{}
-	return true
+	s.m[i] = struct{}{}
+
+	return nil
 }
 
-func (set *unsafeSet) Contains(i ...interface{}) bool {
+func (s *unsafeSet) Contains(i ...interface{}) bool {
 	for _, val := range i {
-		if _, ok := (*set)[val]; !ok {
+		if _, ok := s.m[val]; !ok {
 			return false
 		}
 	}
@@ -50,12 +92,12 @@ func (set *unsafeSet) Contains(i ...interface{}) bool {
 }
 
 // IsSubset 判断other是否是s的子集
-func (set *unsafeSet) IsSubset(other Set) bool {
+func (s *unsafeSet) IsSubset(other Set) bool {
 	_ = other.(*unsafeSet)
-	if set.Size() > other.Size() {
+	if s.Size() > other.Size() {
 		return false
 	}
-	for elem := range *set {
+	for elem := range s.m {
 		if !other.Contains(elem) {
 			return false
 		}
@@ -64,97 +106,96 @@ func (set *unsafeSet) IsSubset(other Set) bool {
 }
 
 // IsProperSubset 判断other是否是s的真子集
-func (set *unsafeSet) IsProperSubset(other Set) bool {
-	return set.IsSubset(other) && !set.Equal(other)
+func (s *unsafeSet) IsProperSubset(other Set) bool {
+	return s.IsSubset(other) && !s.Equal(other)
 }
 
 // IsSuperset 判断other是否是s的超集
-func (set *unsafeSet) IsSuperset(other Set) bool {
-	return other.IsSubset(set)
+func (s *unsafeSet) IsSuperset(other Set) bool {
+	return other.IsSubset(s)
 }
 
 // IsProperSuperset 判断other是否是s的真超集
-func (set *unsafeSet) IsProperSuperset(other Set) bool {
-	return set.IsSuperset(other) && !set.Equal(other)
+func (s *unsafeSet) IsProperSuperset(other Set) bool {
+	return s.IsSuperset(other) && !s.Equal(other)
 }
 
 // Union 求该集合s和other的并集
-func (set *unsafeSet) Union(other Set) Set {
+func (s *unsafeSet) Union(other Set) Set {
 	o := other.(*unsafeSet)
 
-	unionedSet := newUnsafeSet()
+	unionedSet, _ := NewUnsafeSet(s.MaxSize() + other.MaxSize())
 
-	for elem := range *set {
-		unionedSet.Add(elem)
+	for elem := range s.m {
+		_ = unionedSet.Insert(elem)
 	}
-	for elem := range *o {
-		unionedSet.Add(elem)
+	for elem := range o.m {
+		_ = unionedSet.Insert(elem)
 	}
-	return &unionedSet
+	return unionedSet
 }
 
 // Intersect 求s和other的交集
-func (set *unsafeSet) Intersect(other Set) Set {
+func (s *unsafeSet) Intersect(other Set) Set {
+	// 将接口类型转换为*unsafeSet类型
 	o := other.(*unsafeSet)
 
-	intersection := newUnsafeSet()
-	// loop over smaller set
-	if set.Size() < other.Size() {
-		for elem := range *set {
+	intersection, _ := NewUnsafeSet(-1)
+	// loop over smaller s
+	if s.Size() < other.Size() {
+		for elem := range s.m {
 			if other.Contains(elem) {
-				intersection.Add(elem)
+				_ = intersection.Insert(elem)
 			}
 		}
 	} else {
-		for elem := range *o {
-			if set.Contains(elem) {
-				intersection.Add(elem)
+		for elem := range o.m {
+			if s.Contains(elem) {
+				_ = intersection.Insert(elem)
 			}
 		}
 	}
-	return &intersection
+	return intersection
 }
 
 // Difference 求s - other差集
-func (set *unsafeSet) Difference(other Set) Set {
+func (s *unsafeSet) Difference(other Set) Set {
+	// 将接口类型转换为*unsafeSet类型
 	_ = other.(*unsafeSet)
 
-	difference := newUnsafeSet()
-	for elem := range *set {
+	difference, _ := NewUnsafeSet(-1)
+	for elem := range s.m {
 		if !other.Contains(elem) {
-			difference.Add(elem)
+			_ = difference.Insert(elem)
 		}
 	}
-	return &difference
+	return difference
 }
 
 // SymmetricDifference 求该集合s和other的对称差集
 // 对称差集：只属于其中一个集合，而不属于另一个集合的元素组成的集合。
-func (set *unsafeSet) SymmetricDifference(other Set) Set {
+func (s *unsafeSet) SymmetricDifference(other Set) Set {
+	// 将接口类型转换为*unsafeSet类型
 	_ = other.(*unsafeSet)
 
-	aDiff := set.Difference(other)
-	bDiff := other.Difference(set)
+	aDiff := s.Difference(other)
+	bDiff := other.Difference(s)
 
 	return aDiff.Union(bDiff)
 }
 
-func (set *unsafeSet) Clear() {
-	*set = newUnsafeSet()
+func (s *unsafeSet) Clear() {
+	s, _ = NewUnsafeSet(s.maxSize)
 }
 
-func (set *unsafeSet) Remove(i interface{}) {
-	delete(*set, i)
+func (s *unsafeSet) Remove(i interface{}) {
+	delete(s.m, i)
 }
 
-func (set *unsafeSet) Size() int {
-	return len(*set)
-}
-
-func (set *unsafeSet) Iter() <-chan interface{} {
+func (s *unsafeSet) Iter() <-chan interface{} {
 	ch := make(chan interface{})
 	go func() {
-		for elem := range *set {
+		for elem := range s.m {
 			ch <- elem
 		}
 		close(ch)
@@ -163,13 +204,13 @@ func (set *unsafeSet) Iter() <-chan interface{} {
 	return ch
 }
 
-func (set *unsafeSet) Iterator() *Iterator {
+func (s *unsafeSet) Iterator() *Iterator {
 	iterator, ch, stopCh := newIterator()
 
 	// 开启一个go程对返回的iterator进行监听
 	go func() {
 	L:
-		for elem := range *set {
+		for elem := range s.m {
 			select {
 			case <-stopCh:
 				break L
@@ -182,13 +223,13 @@ func (set *unsafeSet) Iterator() *Iterator {
 	return iterator
 }
 
-func (set *unsafeSet) Equal(other Set) bool {
+func (s *unsafeSet) Equal(other Set) bool {
 	_ = other.(*unsafeSet)
 
-	if set.Size() != other.Size() {
+	if s.Size() != other.Size() {
 		return false
 	}
-	for elem := range *set {
+	for elem := range s.m {
 		if !other.Contains(elem) {
 			return false
 		}
@@ -196,46 +237,93 @@ func (set *unsafeSet) Equal(other Set) bool {
 	return true
 }
 
-func (set *unsafeSet) Clone() Set {
-	clonedSet := newUnsafeSet()
-	for elem := range *set {
-		clonedSet.Add(elem)
+func (s *unsafeSet) Clone() Set {
+	clonedSet, _ := NewUnsafeSet(s.MaxSize())
+	for elem := range s.m {
+		_ = clonedSet.Insert(elem)
 	}
-	return &clonedSet
+	return clonedSet
 }
 
-func (set *unsafeSet) String() string {
-	items := make([]string, 0, len(*set))
+func (s *unsafeSet) String() string {
+	items := make([]string, 0, s.Size())
 
-	for elem := range *set {
+	for elem := range s.m {
 		items = append(items, fmt.Sprintf("%v", elem))
 	}
-	return fmt.Sprintf("Set{%s}", strings.Join(items, ", "))
+	return fmt.Sprintf("Set{%m}", strings.Join(items, ", "))
 }
 
-// String outputs a 2-tuple in the form "(A, B)".
 func (pair OrderedPair) String() string {
 	return fmt.Sprintf("(%v, %v)", pair.First, pair.Second)
 }
 
 // CartesianProduct 求该集合s和other的笛卡尔积
-func (set *unsafeSet) CartesianProduct(other Set) Set {
+func (s *unsafeSet) CartesianProduct(other Set) Set {
 	o := other.(*unsafeSet)
-	cartProduct := NewThreadUnsafeSet()
+	cartProduct, _ := NewUnsafeSet(-1)
 
-	for i := range *set {
-		for j := range *o {
+	for i := range s.m {
+		for j := range o.m {
 			elem := OrderedPair{First: i, Second: j}
-			cartProduct.Add(elem)
+			_ = cartProduct.Insert(elem)
 		}
 	}
 
 	return cartProduct
 }
 
-func (set *unsafeSet) ToSlice() []interface{} {
-	keys := make([]interface{}, 0, set.Size())
-	for elem := range *set {
+func (s *unsafeSet) Fill() bool {
+	f := false
+
+	if s.maxSize != -1 && len(s.m) == s.maxSize {
+		f = true
+	}
+
+	return f
+}
+
+func (s *unsafeSet) Empty() bool {
+	return s.Size() == 0
+}
+
+func (s *unsafeSet) Size() int {
+	return len(s.m)
+}
+
+func (s *unsafeSet) MaxSize() int {
+	return s.maxSize
+}
+
+func (s *unsafeSet) SetMaxSize(maxSize int) error {
+	if maxSize != -1 && maxSize < s.Size() {
+		return errors.New("New maxSize is less than current size.")
+	}
+
+	s.maxSize = maxSize
+
+	return nil
+}
+
+func (s *unsafeSet) CatFromSlice(values []interface{}) error {
+	l := len(values)
+	if s.maxSize != -1 && s.Size()+l > s.maxSize {
+		return errors.New("Not enough free space.")
+	}
+
+	for _, value := range values {
+		err := s.Insert(value)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *unsafeSet) ToSlice() []interface{} {
+	keys := make([]interface{}, 0, s.Size())
+	for elem := range s.m {
 		keys = append(keys, elem)
 	}
 
@@ -243,10 +331,10 @@ func (set *unsafeSet) ToSlice() []interface{} {
 }
 
 // MarshalJSON 将集合中的所有元素以Json数组的形式返回
-func (set *unsafeSet) MarshalJSON() ([]byte, error) {
-	items := make([]string, 0, set.Size())
+func (s *unsafeSet) MarshalJSON() ([]byte, error) {
+	items := make([]string, 0, s.Size())
 
-	for elem := range *set {
+	for elem := range s.m {
 		b, err := json.Marshal(elem)
 		if err != nil {
 			return nil, err
@@ -255,11 +343,11 @@ func (set *unsafeSet) MarshalJSON() ([]byte, error) {
 		items = append(items, string(b))
 	}
 
-	return []byte(fmt.Sprintf("[%s]", strings.Join(items, ","))), nil
+	return []byte(fmt.Sprintf("[%m]", strings.Join(items, ","))), nil
 }
 
 // UnmarshalJSON 从给定的Json数组中解析出一个集合,数字将被解析为json.Number
-func (set *unsafeSet) UnmarshalJSON(b []byte) error {
+func (s *unsafeSet) UnmarshalJSON(b []byte) error {
 	var i []interface{}
 
 	d := json.NewDecoder(bytes.NewReader(b))
@@ -274,7 +362,7 @@ func (set *unsafeSet) UnmarshalJSON(b []byte) error {
 		case []interface{}, map[string]interface{}:
 			continue
 		default:
-			set.Add(t)
+			_ = s.Insert(t)
 		}
 	}
 

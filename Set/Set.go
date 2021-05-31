@@ -1,9 +1,9 @@
 package Set
 
+import "GTL/Container"
+
 type Set interface {
-	Add(i interface{}) bool
-	Size() int
-	Clear()
+	Insert(i interface{}) error
 	Clone() Set
 	Contains(...interface{}) bool
 
@@ -44,45 +44,6 @@ type Set interface {
 
 	// CartesianProduct 求该集合s和other的笛卡尔积
 	CartesianProduct(other Set) Set
-	ToSlice() []interface{}
-	String() string
-}
 
-// NewSet NewSet创建并返回一个线程安全的空集的引用
-func NewSet(s ...interface{}) Set {
-	set := newSafeSet()
-	for _, item := range s {
-		set.Add(item)
-	}
-	return &set
-}
-
-// NewSetWith 依照给定的元素创建一个线程安全的空集的引用
-func NewSetWith(elts ...interface{}) Set {
-	return NewSetFromSlice(elts)
-}
-
-// NewSetFromSlice creates and returns a reference to a set from an
-// existing slice.  Operations on the resulting set are thread-safe.
-func NewSetFromSlice(s []interface{}) Set {
-	a := NewSet(s...)
-	return a
-}
-
-// NewThreadUnsafeSet creates and returns a reference to an empty set.
-// Operations on the resulting set are not thread-safe.
-func NewThreadUnsafeSet() Set {
-	set := newUnsafeSet()
-	return &set
-}
-
-// NewThreadUnsafeSetFromSlice creates and returns a reference to a
-// set from an existing slice.  Operations on the resulting set are
-// not thread-safe.
-func NewThreadUnsafeSetFromSlice(s []interface{}) Set {
-	a := NewThreadUnsafeSet()
-	for _, item := range s {
-		a.Add(item)
-	}
-	return a
+	Container.Container
 }

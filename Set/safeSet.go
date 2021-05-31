@@ -1,26 +1,48 @@
 package Set
 
-import "sync"
+import (
+	"sync"
+)
 
 type safeSet struct {
-	s unsafeSet
+	us *unsafeSet
 	sync.RWMutex
 }
 
-func newSafeSet() safeSet {
-	return safeSet{s: newUnsafeSet()}
+func NewSafeSet(maxSize int, values ...interface{}) (*safeSet, error) {
+	s, err := NewUnsafeSet(maxSize, values...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &safeSet{
+		us:      s,
+		RWMutex: sync.RWMutex{},
+	}, nil
 }
 
-func (set *safeSet) Add(i interface{}) bool {
+func NewSafeSetWithSlice(maxSize int, values []interface{}) (*safeSet, error) {
+	s, err := NewUnsafeSetWithSlice(maxSize, values)
+	if err != nil {
+		return nil, err
+	}
+
+	return &safeSet{
+		us:      s,
+		RWMutex: sync.RWMutex{},
+	}, nil
+}
+
+func (set *safeSet) Insert(i interface{}) error {
 	set.Lock()
-	ret := set.s.Add(i)
+	err := set.us.Insert(i)
 	set.Unlock()
-	return ret
+	return err
 }
 
 func (set *safeSet) Contains(i ...interface{}) bool {
 	set.RLock()
-	ret := set.s.Contains(i...)
+	ret := set.us.Contains(i...)
 	set.RUnlock()
 	return ret
 }
@@ -31,9 +53,10 @@ func (set *safeSet) IsSubset(other Set) bool {
 	set.RLock()
 	o.RLock()
 
-	ret := set.s.IsSubset(&o.s)
+	ret := set.us.IsSubset(o.us)
 	set.RUnlock()
 	o.RUnlock()
+
 	return ret
 }
 
@@ -45,7 +68,7 @@ func (set *safeSet) IsProperSubset(other Set) bool {
 	o.RLock()
 	defer o.RUnlock()
 
-	return set.s.IsProperSubset(&o.s)
+	return set.us.IsProperSubset(o.us)
 }
 
 func (set *safeSet) IsSuperset(other Set) bool {
@@ -62,8 +85,11 @@ func (set *safeSet) Union(other Set) Set {
 	set.RLock()
 	o.RLock()
 
-	unsafeUnion := set.s.Union(&o.s).(*unsafeSet)
-	ret := &safeSet{s: *unsafeUnion}
+	unsafeUnion := set.us.Union(o.us).(*unsafeSet)
+	ret := &safeSet{
+		us:      unsafeUnion,
+		RWMutex: sync.RWMutex{},
+	}
 	set.RUnlock()
 	o.RUnlock()
 
@@ -76,10 +102,14 @@ func (set *safeSet) Intersect(other Set) Set {
 	set.RLock()
 	o.RLock()
 
-	unsafeIntersection := set.s.Intersect(&o.s).(*unsafeSet)
-	ret := &safeSet{s: *unsafeIntersection}
+	unsafeIntersection := set.us.Intersect(o.us).(*unsafeSet)
+	ret := &safeSet{
+		us:      unsafeIntersection,
+		RWMutex: sync.RWMutex{},
+	}
 	set.RUnlock()
 	o.RUnlock()
+
 	return ret
 }
 
@@ -89,8 +119,11 @@ func (set *safeSet) Difference(other Set) Set {
 	set.RLock()
 	o.RLock()
 
-	unsafeDifference := set.s.Difference(&o.s).(*unsafeSet)
-	ret := &safeSet{s: *unsafeDifference}
+	unsafeDifference := set.us.Difference(o.us).(*unsafeSet)
+	ret := &safeSet{
+		us:      unsafeDifference,
+		RWMutex: sync.RWMutex{},
+	}
 	set.RUnlock()
 	o.RUnlock()
 	return ret
@@ -102,30 +135,21 @@ func (set *safeSet) SymmetricDifference(other Set) Set {
 	set.RLock()
 	o.RLock()
 
-	unsafeDifference := set.s.SymmetricDifference(&o.s).(*unsafeSet)
-	ret := &safeSet{s: *unsafeDifference}
+	unsafeDifference := set.us.SymmetricDifference(o.us).(*unsafeSet)
+	ret := &safeSet{
+		us:      unsafeDifference,
+		RWMutex: sync.RWMutex{},
+	}
 	set.RUnlock()
 	o.RUnlock()
 
 	return ret
 }
 
-func (set *safeSet) Clear() {
-	set.Lock()
-	set.s = newUnsafeSet()
-	set.Unlock()
-}
-
 func (set *safeSet) Remove(i interface{}) {
 	set.Lock()
-	delete(set.s, i)
+	delete(set.us.m, i)
 	set.Unlock()
-}
-
-func (set *safeSet) Size() int {
-	set.RLock()
-	defer set.RUnlock()
-	return len(set.s)
 }
 
 func (set *safeSet) Iter() <-chan interface{} {
@@ -133,7 +157,7 @@ func (set *safeSet) Iter() <-chan interface{} {
 	go func() {
 		set.RLock()
 
-		for elem := range set.s {
+		for elem := range set.us.m {
 			ch <- elem
 		}
 		close(ch)
@@ -149,7 +173,7 @@ func (set *safeSet) Iterator() *Iterator {
 	go func() {
 		set.RLock()
 	L:
-		for elem := range set.s {
+		for elem := range set.us.m {
 			select {
 			case <-stopCh:
 				break L
@@ -169,26 +193,29 @@ func (set *safeSet) Equal(other Set) bool {
 	set.RLock()
 	o.RLock()
 
-	ret := set.s.Equal(&o.s)
+	ret := set.us.Equal(o.us)
 	set.RUnlock()
 	o.RUnlock()
+
 	return ret
 }
 
 func (set *safeSet) Clone() Set {
 	set.RLock()
+	defer set.RUnlock()
 
-	unsafeClone := set.s.Clone().(*unsafeSet)
-	ret := &safeSet{s: *unsafeClone}
-	set.RUnlock()
-	return ret
+	unsafeClone := set.us.Clone().(*unsafeSet)
+	return &safeSet{
+		us:      unsafeClone,
+		RWMutex: sync.RWMutex{},
+	}
 }
 
 func (set *safeSet) String() string {
 	set.RLock()
-	ret := set.s.String()
-	set.RUnlock()
-	return ret
+	defer set.RUnlock()
+
+	return set.us.String()
 }
 
 func (set *safeSet) CartesianProduct(other Set) Set {
@@ -197,17 +224,69 @@ func (set *safeSet) CartesianProduct(other Set) Set {
 	set.RLock()
 	o.RLock()
 
-	unsafeCartProduct := set.s.CartesianProduct(&o.s).(*unsafeSet)
-	ret := &safeSet{s: *unsafeCartProduct}
+	unsafeCartProduct := set.us.CartesianProduct(o.us).(*unsafeSet)
+	ret := &safeSet{
+		us:      unsafeCartProduct,
+		RWMutex: sync.RWMutex{},
+	}
 	set.RUnlock()
 	o.RUnlock()
+
 	return ret
+}
+
+func (set *safeSet) Clear() {
+	set.Lock()
+	set.us, _ = NewUnsafeSet(set.MaxSize())
+	set.Unlock()
+}
+
+func (set *safeSet) Fill() bool {
+	set.RLock()
+	defer set.RUnlock()
+
+	return set.Fill()
+}
+
+func (set *safeSet) Empty() bool {
+	set.RLock()
+	defer set.RUnlock()
+
+	return set.us.Empty()
+}
+
+func (set *safeSet) Size() int {
+	set.RLock()
+	defer set.RUnlock()
+
+	return set.us.Size()
+}
+
+func (set *safeSet) MaxSize() int {
+	set.RLock()
+	defer set.RUnlock()
+
+	return set.us.MaxSize()
+}
+
+func (set *safeSet) SetMaxSize(maxSize int) error {
+	set.Lock()
+	defer set.Unlock()
+
+	return set.us.SetMaxSize(maxSize)
+}
+
+func (set *safeSet) CatFromSlice(values []interface{}) error {
+	set.Lock()
+	defer set.Unlock()
+
+	return set.us.CatFromSlice(values)
 }
 
 func (set *safeSet) ToSlice() []interface{} {
 	keys := make([]interface{}, 0, set.Size())
 	set.RLock()
-	for elem := range set.s {
+	for elem := range set.us.m {
 		keys = append(keys, elem)
 	}
 	set.RUnlock()
@@ -216,16 +295,16 @@ func (set *safeSet) ToSlice() []interface{} {
 
 func (set *safeSet) MarshalJSON() ([]byte, error) {
 	set.RLock()
-	b, err := set.s.MarshalJSON()
+	b, err := set.us.MarshalJSON()
 	set.RUnlock()
 
 	return b, err
 }
 
 func (set *safeSet) UnmarshalJSON(p []byte) error {
-	set.RLock()
-	err := set.s.UnmarshalJSON(p)
-	set.RUnlock()
+	set.Lock()
+	err := set.us.UnmarshalJSON(p)
+	set.Unlock()
 
 	return err
 }
