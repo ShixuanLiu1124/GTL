@@ -146,9 +146,9 @@ func (set *safeSet) SymmetricDifference(other Set) Set {
 	return ret
 }
 
-func (set *safeSet) Remove(i interface{}) {
+func (set *safeSet) Remove(value interface{}) {
 	set.Lock()
-	delete(set.us.m, i)
+	delete(set.us.m, value)
 	set.Unlock()
 }
 

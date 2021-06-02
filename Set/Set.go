@@ -36,7 +36,7 @@ type Set interface {
 
 	// Iterator 返回该集合s的一个迭代器
 	Iterator() *Iterator
-	Remove(i interface{})
+	Remove(value interface{})
 
 	// SymmetricDifference 求该集合s和other的对称差集
 	// 对称差集：只属于其中一个集合，而不属于另一个集合的元素组成的集合。

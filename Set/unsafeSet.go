@@ -188,8 +188,8 @@ func (s *unsafeSet) Clear() {
 	s, _ = NewUnsafeSet(s.maxSize)
 }
 
-func (s *unsafeSet) Remove(i interface{}) {
-	delete(s.m, i)
+func (s *unsafeSet) Remove(value interface{}) {
+	delete(s.m, value)
 }
 
 func (s *unsafeSet) Iter() <-chan interface{} {
