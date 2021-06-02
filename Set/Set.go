@@ -3,9 +3,9 @@ package Set
 import "GTL/Container"
 
 type Set interface {
-	Insert(i interface{}) error
+	Insert(value interface{}) error
 	Clone() Set
-	Contains(...interface{}) bool
+	Contains(values ...interface{}) bool
 
 	// Difference 求s - other差集
 	Difference(other Set) Set

@@ -33,16 +33,16 @@ func NewSafeSetWithSlice(maxSize int, values []interface{}) (*safeSet, error) {
 	}, nil
 }
 
-func (set *safeSet) Insert(i interface{}) error {
+func (set *safeSet) Insert(value interface{}) error {
 	set.Lock()
-	err := set.us.Insert(i)
+	err := set.us.Insert(value)
 	set.Unlock()
 	return err
 }
 
-func (set *safeSet) Contains(i ...interface{}) bool {
+func (set *safeSet) Contains(values ...interface{}) bool {
 	set.RLock()
-	ret := set.us.Contains(i...)
+	ret := set.us.Contains(values...)
 	set.RUnlock()
 	return ret
 }

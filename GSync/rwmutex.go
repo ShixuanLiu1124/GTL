@@ -228,13 +228,13 @@ func (l *WritePreferRWLock) WUnlock() {
 
 // WritePreferFastRWLock 模仿Go语言自身RWMutex实现更高效的读写锁
 type WritePreferFastRWLock struct {
-	w sync.Mutex
+	w *sync.Mutex
 
 	writerWait chan struct{}
 	readerWait chan struct{}
 
 	// numPending 已经持有锁的读者数量
-	// 写者将该字段减去maxReaders，如果得到一个负数就表明一个写者正在使用锁，
+	// 写者将该字段减去maxReaders，如果得到一个负数就表明一个写者正在使用锁
 	numPending int32
 
 	// readersDeparting 在写者持有锁之前获取锁的读者数量（读者释放锁，也会随之减1）
@@ -291,6 +291,7 @@ func (l *WritePreferFastRWLock) WLock() {
 func (l *WritePreferFastRWLock) WUnlock() {
 	// 告知读者，写者已经占用完了临界区
 	r := atomic.AddInt32(&l.numPending, maxReaders)
+
 	// 如果本来就没有写锁，便报出panic
 	if r >= maxReaders {
 		panic("WUnlock of unlocked RWLock")

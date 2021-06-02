@@ -72,18 +72,18 @@ func (pair *OrderedPair) Equal(other OrderedPair) bool {
 }
 
 // Insert 向集合中添加元素
-func (s *unsafeSet) Insert(i interface{}) error {
+func (s *unsafeSet) Insert(value interface{}) error {
 	if s.Fill() {
 		return errors.New("This set is fill.")
 	}
 
-	s.m[i] = struct{}{}
+	s.m[value] = struct{}{}
 
 	return nil
 }
 
-func (s *unsafeSet) Contains(i ...interface{}) bool {
-	for _, val := range i {
+func (s *unsafeSet) Contains(values ...interface{}) bool {
+	for _, val := range values {
 		if _, ok := s.m[val]; !ok {
 			return false
 		}
