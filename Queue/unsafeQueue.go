@@ -18,7 +18,7 @@ type unsafeQueue struct {
 	size    int
 	maxSize int
 	head    *qNode
-	rail    *qNode
+	rear    *qNode
 }
 
 func NewUnsafeQueue(maxSize int, values ...interface{}) (*unsafeQueue, error) {
@@ -36,7 +36,7 @@ func NewUnsafeQueue(maxSize int, values ...interface{}) (*unsafeQueue, error) {
 		size:    0,
 		maxSize: maxSize,
 		head:    node,
-		rail:    node,
+		rear:    node,
 	}
 
 	for _, value := range values {
@@ -64,7 +64,7 @@ func NewUnsafeQueueWithSlice(maxSize int, values []interface{}) (*unsafeQueue, e
 		size:    0,
 		maxSize: maxSize,
 		head:    node,
-		rail:    node,
+		rear:    node,
 	}
 
 	for _, value := range values {
@@ -85,10 +85,10 @@ func (q *unsafeQueue) Push(value interface{}) error {
 	node := &qNode{
 		value: value,
 		next:  nil,
-		prev:  q.rail,
+		prev:  q.rear,
 	}
-	q.rail.next = node
-	q.rail = node
+	q.rear.next = node
+	q.rear = node
 	q.size++
 
 	return nil
@@ -152,7 +152,7 @@ func (q *unsafeQueue) Size() int {
 }
 
 func (q *unsafeQueue) Clear() {
-	q.rail = q.head
+	q.rear = q.head
 	q.head.prev = nil
 	q.head.next = nil
 	q.head.value = nil

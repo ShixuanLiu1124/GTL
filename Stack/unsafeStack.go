@@ -18,7 +18,7 @@ type unsafeStack struct {
 	size    int
 	maxSize int
 	head    *sNode
-	rail    *sNode
+	rear    *sNode
 }
 
 func NewUnsafeStack(maxSize int, values ...interface{}) (*unsafeStack, error) {
@@ -36,7 +36,7 @@ func NewUnsafeStack(maxSize int, values ...interface{}) (*unsafeStack, error) {
 		size:    0,
 		maxSize: maxSize,
 		head:    node,
-		rail:    node,
+		rear:    node,
 	}
 
 	for _, value := range values {
@@ -64,7 +64,7 @@ func NewUnsafeStackWithSlice(maxSize int, values []interface{}) (*unsafeStack, e
 		size:    0,
 		maxSize: maxSize,
 		head:    node,
-		rail:    node,
+		rear:    node,
 	}
 
 	for _, value := range values {
@@ -85,10 +85,10 @@ func (s *unsafeStack) Push(value interface{}) error {
 	node := &sNode{
 		value: value,
 		next:  nil,
-		prev:  s.rail,
+		prev:  s.rear,
 	}
-	s.rail.next = node
-	s.rail = node
+	s.rear.next = node
+	s.rear = node
 	s.size++
 
 	return nil
@@ -99,7 +99,7 @@ func (s *unsafeStack) Top() (interface{}, error) {
 		return nil, errors.New("This stack is empty")
 	}
 
-	return s.rail.value, nil
+	return s.rear.value, nil
 }
 
 func (s *unsafeStack) Pop() (interface{}, error) {
@@ -107,9 +107,9 @@ func (s *unsafeStack) Pop() (interface{}, error) {
 		return nil, errors.New("This stack is empty")
 	}
 
-	value := s.rail.value
-	s.rail = s.rail.prev
-	s.rail.next = nil
+	value := s.rear.value
+	s.rear = s.rear.prev
+	s.rear.next = nil
 	s.size--
 
 	return value, nil
@@ -171,7 +171,7 @@ func (s *unsafeStack) MaxSize() int {
 }
 
 func (s *unsafeStack) Clear() {
-	s.rail = s.head
+	s.rear = s.head
 	s.head.prev = nil
 	s.head.next = nil
 	s.head.value = nil

@@ -18,7 +18,7 @@ type unsafeDeque struct {
 	size    int
 	maxSize int
 	head    *dQNode
-	rail    *dQNode
+	rear    *dQNode
 }
 
 func NewUnsafeDeque(maxSize int, values ...interface{}) (*unsafeDeque, error) {
@@ -36,7 +36,7 @@ func NewUnsafeDeque(maxSize int, values ...interface{}) (*unsafeDeque, error) {
 		size:    0,
 		maxSize: maxSize,
 		head:    node,
-		rail:    node,
+		rear:    node,
 	}
 
 	for _, value := range values {
@@ -64,7 +64,7 @@ func NewUnsafeDequeWithSlice(maxSize int, values []interface{}) (*unsafeDeque, e
 		size:    0,
 		maxSize: maxSize,
 		head:    node,
-		rail:    node,
+		rear:    node,
 	}
 
 	for _, value := range values {
@@ -102,10 +102,10 @@ func (q *unsafeDeque) PushBack(value interface{}) error {
 	node := &dQNode{
 		value: value,
 		next:  nil,
-		prev:  q.rail,
+		prev:  q.rear,
 	}
-	q.rail.next = node
-	q.rail = node
+	q.rear.next = node
+	q.rear = node
 	q.size++
 
 	return nil
@@ -124,7 +124,7 @@ func (q *unsafeDeque) Back() (interface{}, error) {
 		return nil, errors.New("This deque is empty.")
 	}
 
-	return q.rail.value, nil
+	return q.rear.value, nil
 }
 
 func (q *unsafeDeque) PopFront() (interface{}, error) {
@@ -144,8 +144,8 @@ func (q *unsafeDeque) PopBack() (interface{}, error) {
 		return nil, errors.New("This deque is empty")
 	}
 
-	value := q.rail.value
-	q.rail = q.rail.prev
+	value := q.rear.value
+	q.rear = q.rear.prev
 	q.size--
 
 	return value, nil
@@ -203,7 +203,7 @@ func (q *unsafeDeque) SetMaxSize(maxSize int) error {
 }
 
 func (q *unsafeDeque) Clear() {
-	q.rail = q.head
+	q.rear = q.head
 	q.head.prev = nil
 	q.head.next = nil
 	q.head.value = nil
