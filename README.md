@@ -10,4 +10,5 @@ GSync包是模仿
 
 ## Container
 
-Container是一个容器接口
+Container是一个容器接口，所有的容器类都实现此接口
+
