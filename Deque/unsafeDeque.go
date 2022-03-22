@@ -274,6 +274,9 @@ func (q *unsafeDeque) UnmarshalJSON(b []byte) error {
 	var i []interface{}
 
 	d := json.NewDecoder(bytes.NewReader(b))
+
+	// 使用 UseNumber 方法后，json包会将数字转换成一个内置的 Number 类型（而不是 float64），
+	// 这个 Number 类型提供了转换为 int64、float64 等多个方法。
 	d.UseNumber()
 	err := d.Decode(&i)
 	if err != nil {
